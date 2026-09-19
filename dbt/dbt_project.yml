@@ -1,0 +1,31 @@
+name: workplace_platform
+version: "1.0.0"
+config-version: 2
+
+profile: workplace_platform
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  workplace_platform:
+    staging:
+      +materialized: view
+      +schema: staging
+    intermediate:
+      +materialized: table
+      +schema: intermediate
+    marts:
+      +materialized: table
+      +schema: marts
+
+vars:
+  # Mirrors conf/sim.yaml metrics.seat_demand_buffer. The semantic layer
+  # compiler checks the two agree and fails CI if they drift apart.
+  seat_demand_buffer: 0.10
+  tap_dedupe_window_seconds: 90
+  # Local hour before which a tap is attributed to the previous business day.
+  business_day_cutover_hour: 4

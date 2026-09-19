@@ -1,0 +1,9 @@
+workplace_platform:
+  target: local
+  outputs:
+    local:
+      type: duckdb
+      path: "../warehouse/local.duckdb"
+      threads: 4
+      extensions:
+        - icu

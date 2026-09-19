@@ -1,0 +1,98 @@
+version: 2
+
+models:
+  - name: dim_date
+    description: Date spine derived from the range present in int_employee_day.
+    columns:
+      - name: date_day
+        tests: [not_null, unique]
+      - name: weekday_mon0
+        tests:
+          - accepted_values:
+              values: [0, 1, 2, 3, 4, 5, 6]
+              quote: false
+
+  - name: dim_employee
+    description: Current-version employee dimension. One row per employee.
+    columns:
+      - name: emp_id
+        tests: [not_null, unique]
+      - name: employee_type
+        tests:
+          - accepted_values:
+              values: [FTE, intern, contractor, BPO]
+      - name: theory_workplace
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_workplace')
+              field: workplace_code
+
+  - name: dim_workplace
+    description: Workplace-grain space dimension.
+    columns:
+      - name: workplace_code
+        tests: [not_null, unique]
+      - name: region
+        tests:
+          - not_null
+          - accepted_values:
+              values: [AMER, EMEA, APAC, CN]
+      - name: delivered_workstations
+        tests: [not_null]
+      - name: timezone
+        tests: [not_null]   # staging has already applied the UTC fallback
+
+  - name: fct_attendance_daily
+    description: >
+      Attendance at (local_date, expected workplace, dept_l2) grain. Keyed on
+      where people were expected, so it answers compliance questions.
+    columns:
+      - name: local_date
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_day
+      - name: workplace_code
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_workplace')
+              field: workplace_code
+      - name: dept_l2
+        tests: [not_null]
+      - name: headcount_incumbent
+        tests: [not_null]
+
+  - name: fct_workplace_capacity_daily
+    description: >
+      Supply against realised demand at (local_date, workplace_code) grain.
+      Keyed on where people actually tapped, so it answers occupancy questions.
+    columns:
+      - name: local_date
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_day
+      - name: workplace_code
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_workplace')
+              field: workplace_code
+      - name: available_workstations
+        tests: [not_null]
+
+  - name: fct_floor_presence_hourly
+    description: Tap-derived floor presence by local hour.
+    columns:
+      - name: workplace_code
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_workplace')
+              field: workplace_code
+      - name: local_hour
+        tests: [not_null]

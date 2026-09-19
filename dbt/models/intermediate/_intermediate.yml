@@ -1,0 +1,79 @@
+version: 2
+
+models:
+  - name: int_employee_scd2
+    description: Validity intervals derived from the daily HR snapshot.
+    columns:
+      - name: emp_id
+        tests: [not_null]
+      - name: valid_from
+        tests: [not_null]
+      - name: employment_status_reported
+        tests:
+          - accepted_values:
+              values: [active, onboarding, resigned, terminated, on_assignment, pre_assignment]
+
+  - name: int_leave_days
+    description: Approved leave expanded to employee-days, overlaps collapsed.
+    columns:
+      - name: emp_id
+        tests: [not_null]
+      - name: leave_date
+        tests: [not_null]
+      - name: leave_type
+        tests:
+          - accepted_values:
+              values: [annual, sick, parental, unpaid, comp]
+
+  - name: int_travel_days
+    description: Confirmed travel expanded to employee-days, overlaps collapsed.
+    columns:
+      - name: emp_id
+        tests: [not_null]
+      - name: travel_date
+        tests: [not_null]
+
+  - name: int_tap_day
+    description: One row per employee per local day of presence.
+    columns:
+      - name: emp_id
+        tests: [not_null]
+      - name: tap_workplace
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_workplace')
+              field: workplace_code
+
+  - name: int_employee_day
+    description: >
+      The central fact, one row per (emp_id, local_date), carrying the resolved
+      employee-day state and the precedence rule that produced it.
+    columns:
+      - name: emp_id
+        tests: [not_null]
+      - name: local_date
+        tests: [not_null]
+      - name: expected_workplace
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_workplace')
+              field: workplace_code
+      - name: employee_day_state
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                [post_exit, pre_hire, on_leave, on_travel, on_assignment,
+                 non_office_day, attended, no_show]
+      - name: state_rule_id
+        tests:
+          - not_null
+          - accepted_values:
+              values: [1, 2, 3, 4, 5, 6, 7, 8]
+              quote: false
+      - name: employment_status_effective
+        tests:
+          - accepted_values:
+              values: [active, onboarding, terminated, on_assignment, pre_assignment]

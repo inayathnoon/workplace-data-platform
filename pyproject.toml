@@ -1,0 +1,62 @@
+[project]
+name = "workplace-data-platform"
+version = "0.1.0"
+description = "Dimensional warehouse and semantic metric layer for global employee-presence data, on synthetic data."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "polars>=1.0",
+    "pyarrow>=16.0",
+    "faker>=25.0",
+    "duckdb>=1.0",
+    "dbt-duckdb>=1.8",
+    "pandera>=0.20",
+    "dagster>=1.7",
+    "dagster-webserver>=1.7",
+    "pydantic>=2.7",
+    "pyyaml>=6.0",
+    "streamlit>=1.35",
+    "matplotlib>=3.8",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.5",
+    "mypy>=1.10",
+    "pre-commit>=3.7",
+    "types-PyYAML",
+]
+
+[project.scripts]
+wdp = "workplace_platform.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/workplace_platform"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["B008"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+warn_unused_ignores = false
+disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]

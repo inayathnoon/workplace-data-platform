@@ -95,12 +95,12 @@ def generate_all(cfg: Config | None = None, clean: bool = True) -> dict:
     travel = generate_travel(cfg, master)
     row_counts["travel_bookings"] = _write_table(travel, RAW_DIR, "travel_bookings")
 
-    leave_by_day: dict[date, set[str]] = defaultdict(set)
-    for emp, day in leave_days(leave):
-        leave_by_day[day].add(emp)
-    travel_by_day: dict[date, dict[str, str]] = defaultdict(dict)
-    for (emp, day), dest in travel_days(travel).items():
-        travel_by_day[day][emp] = dest
+    leave_by_day: dict[object, set[str]] = defaultdict(set)
+    for emp, leave_day in leave_days(leave):
+        leave_by_day[leave_day].add(emp)
+    travel_by_day: dict[object, dict[str, str]] = defaultdict(dict)
+    for (emp, travel_day), dest in travel_days(travel).items():
+        travel_by_day[travel_day][emp] = dest
 
     # 2. Badge taps, day by day so memory stays flat at any profile size.
     gen = TapGenerator(cfg, master, workplaces)

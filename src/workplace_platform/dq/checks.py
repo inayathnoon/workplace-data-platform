@@ -277,15 +277,15 @@ def tap_after_termination(con, cfg: Config) -> CheckResult:
         """,
         [grace],
     )
-    within_grace = query(
+    any_lag = query(
         con,
         """
-        select count(*) as taps
+        select count(*) as taps, count(distinct t.emp_id) as employees
         from main_staging.stg_badge_taps t
         join main_marts.dim_employee e on t.emp_id = e.emp_id
         where e.term_date is not null and t.business_date > e.term_date
         """,
-    )["taps"].iloc[0]
+    )
 
     people = len(rows)
     return CheckResult(
@@ -301,7 +301,11 @@ def tap_after_termination(con, cfg: Config) -> CheckResult:
         value=float(people),
         threshold=0.0,
         sample=rows.head(SAMPLE_ROWS) if people else None,
-        details={"taps_after_termination_any": int(within_grace), "grace_days": grace},
+        details={
+            "taps_after_termination_any": int(any_lag["taps"].iloc[0]),
+            "employees_after_termination_any": int(any_lag["employees"].iloc[0]),
+            "grace_days": grace,
+        },
     )
 
 

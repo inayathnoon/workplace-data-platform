@@ -117,9 +117,7 @@ def generate_employees(cfg: Config, workplaces: pd.DataFrame) -> pd.DataFrame:
         lognormal_from_mean(rng, wf.tenure_days["mean"], wf.tenure_days["sigma"], n),
         wf.tenure_days["max"],
     )
-    hire_date = np.array(
-        [cfg.end_date - timedelta(days=int(t)) for t in tenure], dtype="object"
-    )
+    hire_date = np.array([cfg.end_date - timedelta(days=int(t)) for t in tenure], dtype="object")
 
     status = choice_from_mix(rng, wf.employment_status_mix, n)
 
@@ -247,12 +245,16 @@ def _assign_managers(master: pd.DataFrame, rng: np.random.Generator) -> np.ndarr
 
     is_manager = master["emp_id"].to_numpy() == manager_ids
     l2_managers: dict[str, list[str]] = {}
-    for l2, emp in zip(master.loc[is_manager, "dept_l2"], master.loc[is_manager, "emp_id"], strict=True):
+    manager_rows = zip(
+        master.loc[is_manager, "dept_l2"], master.loc[is_manager, "emp_id"], strict=True
+    )
+    for l2, emp in manager_rows:
         l2_managers.setdefault(l2, []).append(emp)
 
     out = manager_ids.copy()
     for i in np.flatnonzero(is_manager):
-        peers = [m for m in l2_managers[master["dept_l2"].iloc[i]] if m != master["emp_id"].iloc[i]]
+        emp_id = master["emp_id"].iloc[i]
+        peers = [m for m in l2_managers[master["dept_l2"].iloc[i]] if m != emp_id]
         out[i] = peers[int(rng.integers(len(peers)))] if peers else None
     return out
 
@@ -260,7 +262,14 @@ def _assign_managers(master: pd.DataFrame, rng: np.random.Generator) -> np.ndarr
 # --- Daily snapshot --------------------------------------------------------
 
 
-def status_on(row_hire: date, row_term, final_status: str, assign_start, assign_end, day: date) -> str:
+def status_on(
+    row_hire: date,
+    row_term,
+    final_status: str,
+    assign_start,
+    assign_end,
+    day: date,
+) -> str:
     """Employment status as HR would report it on ``day``.
 
     Kept as a single readable function because it is the definition the
@@ -287,7 +296,7 @@ def build_defect_plan(cfg: Config, master: pd.DataFrame) -> dict:
     """
     rng = substream(cfg.seed, "hr_defects")
     plan: dict = {
-        "resigned_still_active": {},   # emp_id -> last date to keep showing active
+        "resigned_still_active": {},  # emp_id -> last date to keep showing active
         "rows_before_hire_date": set(),  # (emp_id, day)
         "null_base_city_rate": cfg.defects.hr_null_base_city_share,
         "counts": {},
@@ -319,9 +328,7 @@ def build_defect_plan(cfg: Config, master: pd.DataFrame) -> dict:
 
     # 2. Rows that appear before the employee's own hire date, labelled active.
     n_early = cfg.defects.hr_rows_before_hire_date
-    candidates = master[
-        master["hire_date"].apply(lambda d: d > cfg.start_date + timedelta(days=1))
-    ]
+    candidates = master[master["hire_date"].apply(lambda d: d > cfg.start_date + timedelta(days=1))]
     if len(candidates) and n_early:
         picked = rng.choice(
             candidates["emp_id"].to_numpy(), size=min(n_early, len(candidates)), replace=False
@@ -374,7 +381,8 @@ def snapshot_for_date(
     still_active = plan["resigned_still_active"]
     if still_active:
         mask = df["emp_id"].map(lambda e: e in still_active and day <= still_active[e])
-        df.loc[mask.to_numpy() & (df["employment_status"] != "active").to_numpy(), "employment_status"] = "active"
+        flip = mask.to_numpy() & (df["employment_status"] != "active").to_numpy()
+        df.loc[flip, "employment_status"] = "active"
 
     # Defect 2: rows before the hire date, reported active.
     if early_today:

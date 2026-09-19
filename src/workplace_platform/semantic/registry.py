@@ -75,7 +75,8 @@ class Expression(_Base):
             for region, expr in sorted(self.regional_variants.items())
         )
         resolved = f"case {cases} else {self.variant_default} end"
-        return self.sql.format(**{self.variant_term: resolved})
+        assert self.variant_term is not None  # enforced by _check_variants
+        return self.sql.replace(f"{{{self.variant_term}}}", resolved)
 
     @property
     def is_region_dependent(self) -> bool:

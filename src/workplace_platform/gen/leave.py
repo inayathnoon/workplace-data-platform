@@ -28,19 +28,23 @@ def generate_leave(cfg: Config, master: pd.DataFrame) -> pd.DataFrame:
     if total == 0:
         return pd.DataFrame(
             columns=[
-                "leave_id", "emp_id", "leave_type", "start_date", "end_date",
-                "status", "applied_ts",
+                "leave_id",
+                "emp_id",
+                "leave_type",
+                "start_date",
+                "end_date",
+                "status",
+                "applied_ts",
             ]
         )
 
     emp_ids = np.repeat(master["emp_id"].to_numpy(), spells)
     start_offsets = rng.integers(0, n_days, size=total)
+    duration_cfg = lv["duration_days"]
     durations = np.clip(
-        np.round(
-            lognormal_from_mean(rng, lv["duration_days"]["mean"], lv["duration_days"]["sigma"], total)
-        ),
+        np.round(lognormal_from_mean(rng, duration_cfg["mean"], duration_cfg["sigma"], total)),
         1,
-        lv["duration_days"]["max"],
+        duration_cfg["max"],
     ).astype(int)
 
     start_dates = np.array([cfg.start_date + timedelta(days=int(o)) for o in start_offsets])
@@ -53,7 +57,8 @@ def generate_leave(cfg: Config, master: pd.DataFrame) -> pd.DataFrame:
     retro = rng.random(total) < lv["retro_applied_share"]
     lead_days = rng.integers(1, 28, size=total)
     applied = []
-    for s, e, is_retro, lead in zip(start_dates, end_dates, retro, lead_days, strict=True):
+    request_rows = zip(start_dates, end_dates, retro, lead_days, strict=True)
+    for s, e, is_retro, lead in request_rows:
         if is_retro:
             applied_day = min(e + timedelta(days=int(rng.integers(0, 3))), cfg.end_date)
         else:
@@ -109,7 +114,8 @@ def leave_days(df: pd.DataFrame) -> set[tuple[str, object]]:
     """
     out: set[tuple[str, object]] = set()
     approved = df[df["status"] == "approved"]
-    for emp, s, e in zip(approved["emp_id"], approved["start_date"], approved["end_date"], strict=True):
+    spells = zip(approved["emp_id"], approved["start_date"], approved["end_date"], strict=True)
+    for emp, s, e in spells:
         day = s
         while day <= e:
             out.add((emp, day))

@@ -14,14 +14,14 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 import duckdb
 import pandas as pd
 
 
-class Status(str, Enum):
+class Status(StrEnum):
     PASS = "pass"
     WARN = "warn"
     FAIL = "fail"
@@ -31,7 +31,7 @@ class Status(str, Enum):
         return {"pass": 0, "warn": 1, "fail": 2}[self.value]
 
 
-class Category(str, Enum):
+class Category(StrEnum):
     FRESHNESS = "freshness"
     INTEGRITY = "referential_integrity"
     GRAIN = "grain_uniqueness"

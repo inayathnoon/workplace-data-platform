@@ -265,13 +265,10 @@ def _compile_composite(
         formula = formula.replace(component, f"c_{component}.{component}")
 
     keys = (["period"] if time_grain else []) + list(dimensions)
-    ctes = ",\n".join(
-        f"c_{name} as (\n{_indent(part.sql)}\n)" for name, part in parts.items()
-    )
+    ctes = ",\n".join(f"c_{name} as (\n{_indent(part.sql)}\n)" for name, part in parts.items())
     first, *rest = metric.components
     join_sql = "\n".join(
-        "inner join c_{n} on ".format(n=other)
-        + " and ".join(f"c_{first}.{k} = c_{other}.{k}" for k in keys)
+        f"inner join c_{other} on " + " and ".join(f"c_{first}.{k} = c_{other}.{k}" for k in keys)
         if keys
         else f"cross join c_{other}"
         for other in rest
@@ -279,12 +276,7 @@ def _compile_composite(
     select_keys = ", ".join(f"c_{first}.{k}" for k in keys)
     projection = f"{select_keys + ', ' if keys else ''}{formula} as {metric.name}"
 
-    sql = (
-        f"with {ctes}\n"
-        f"select {projection}\n"
-        f"from c_{first}\n"
-        f"{join_sql}"
-    ).rstrip()
+    sql = (f"with {ctes}\nselect {projection}\nfrom c_{first}\n{join_sql}").rstrip()
     if keys:
         sql += "\norder by " + ", ".join(f"c_{first}.{k}" for k in keys)
 
@@ -396,10 +388,10 @@ def render_lineage(registry: Registry, path: Path) -> Path:
         ("Composite", sorted(m.name for m in registry if m.metric_type == "composite")),
     ]
     positions: dict[str, tuple[float, float]] = {}
-    for x, (_, nodes) in enumerate(layers):
-        for y, node in enumerate(nodes):
-            offset = (max(len(n) for _, n in layers) - len(nodes)) / 2
-            positions[node] = (x * 3.0, -(y + offset))
+    for depth, (_, nodes) in enumerate(layers):
+        for row, node in enumerate(nodes):
+            offset = (max(len(n) for _, n in layers) - len(nodes)) / 2.0
+            positions[node] = (depth * 3.0, -(row + offset))
 
     fig, ax = plt.subplots(figsize=(15, 8))
     for metric in registry:
@@ -410,19 +402,39 @@ def render_lineage(registry: Registry, path: Path) -> Path:
             if component in positions:
                 _arrow(ax, positions[component], positions[metric.name], "#7a8ca0")
 
-    colours = {"Marts": "#dfe7ef", "Atomic": "#cfe3d4", "Derived": "#dcd6ef", "Composite": "#f1dfc9"}
+    colours = {
+        "Marts": "#dfe7ef",
+        "Atomic": "#cfe3d4",
+        "Derived": "#dcd6ef",
+        "Composite": "#f1dfc9",
+    }
     for layer_name, nodes in layers:
         for node in nodes:
             x, y = positions[node]
             ax.text(
-                x, y, node.replace("_", "\n", 1),
-                ha="center", va="center", fontsize=7.5,
-                bbox={"boxstyle": "round,pad=0.45", "facecolor": colours[layer_name],
-                      "edgecolor": "#8a97a6", "linewidth": 0.7},
+                x,
+                y,
+                node.replace("_", "\n", 1),
+                ha="center",
+                va="center",
+                fontsize=7.5,
+                bbox={
+                    "boxstyle": "round,pad=0.45",
+                    "facecolor": colours[layer_name],
+                    "edgecolor": "#8a97a6",
+                    "linewidth": 0.7,
+                },
             )
-    for x, (layer_name, _) in enumerate(layers):
-        ax.text(x * 3.0, 1.2, layer_name, ha="center", fontsize=11, fontweight="bold",
-                color="#33404f")
+    for depth, (layer_name, _) in enumerate(layers):
+        ax.text(
+            depth * 3.0,
+            1.2,
+            layer_name,
+            ha="center",
+            fontsize=11,
+            fontweight="bold",
+            color="#33404f",
+        )
 
     ax.set_xlim(-1.8, (len(layers) - 1) * 3.0 + 1.8)
     ax.set_ylim(-max(len(n) for _, n in layers) - 0.5, 2.0)
@@ -440,8 +452,12 @@ def _arrow(ax, start: tuple[float, float], end: tuple[float, float], colour: str
         "",
         xy=(end[0] - 0.95, end[1]),
         xytext=(start[0] + 0.95, start[1]),
-        arrowprops={"arrowstyle": "->", "color": colour, "linewidth": 0.9,
-                    "connectionstyle": "arc3,rad=0.08"},
+        arrowprops={
+            "arrowstyle": "->",
+            "color": colour,
+            "linewidth": 0.9,
+            "connectionstyle": "arc3,rad=0.08",
+        },
     )
 
 

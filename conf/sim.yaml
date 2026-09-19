@@ -78,7 +78,12 @@ geography:
   # Workstation supply, expressed per employee rather than as an absolute mean
   # so that supply tracks headcount across profiles. A fixed mean gave the demo
   # profile three desks per person and a meaningless waste ratio.
-  workstations_per_employee: 1.15
+  #
+  # Below 1.0 on purpose: an estate running a three-day office week does not
+  # build a desk per person, which is what the free-sharing pool and the
+  # floating-headcount metric exist to manage. At 1.15 every site was
+  # over-allocated and floating_headcount was structurally zero.
+  workstations_per_employee: 0.85
   workstations_per_workplace: { sigma: 0.45, min: 60 }
   sqm_per_workstation: { mean: 8.4, sigma: 0.18 }
   towers_per_workplace: { min: 1, max: 3 }
@@ -216,5 +221,11 @@ dq:
 metrics:
   seat_demand_buffer: 0.10
   free_sharing_share: 0.08          # of delivered workstations
+  # Allocation varies by site rather than being a single estate-wide ratio.
+  # With one fixed share, every workplace was over-allocated relative to its
+  # population and floating_headcount was identically zero everywhere - a
+  # metric that can only return one value is not measuring anything.
   allocated_share_of_delivered: 0.86
+  allocated_share_sigma: 0.13
+  allocated_share_bounds: [0.55, 0.98]
   cost_per_workstation_month: { mean: 520.0, sigma: 0.35 }

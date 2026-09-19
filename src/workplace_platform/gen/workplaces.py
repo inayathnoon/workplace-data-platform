@@ -33,9 +33,7 @@ def generate_workplaces(cfg: Config) -> pd.DataFrame:
     ws_cfg = cfg.geography.workstations_per_workplace
     # Mean supply per workplace, derived from headcount so the estate is
     # plausibly sized at any profile.
-    ws_mean = (
-        cfg.profile.n_employees * cfg.geography.workstations_per_employee / n_workplaces
-    )
+    ws_mean = cfg.profile.n_employees * cfg.geography.workstations_per_employee / n_workplaces
     sqm_cfg = cfg.geography.sqm_per_workstation
     tower_cfg = cfg.geography.towers_per_workplace
     floor_cfg = cfg.geography.floors_per_tower
@@ -66,6 +64,17 @@ def generate_workplaces(cfg: Config) -> pd.DataFrame:
             per_floor[0] += delivered_total - int(per_floor.sum())
             per_floor = np.maximum(per_floor, 1)
 
+            lo, hi = cfg.metrics.allocated_share_bounds
+            allocated_share = float(
+                np.clip(
+                    rng.normal(
+                        cfg.metrics.allocated_share_of_delivered,
+                        cfg.metrics.allocated_share_sigma,
+                    ),
+                    lo,
+                    hi,
+                )
+            )
             audited = bool(rng.random() < cfg.geography.space_audited_share)
             lease_offset = int(
                 rng.integers(
@@ -88,9 +97,7 @@ def generate_workplaces(cfg: Config) -> pd.DataFrame:
                     sqm_per_ws = float(
                         lognormal_from_mean(rng, sqm_cfg["mean"], sqm_cfg["sigma"], 1)[0]
                     )
-                    allocated = int(
-                        round(delivered * cfg.metrics.allocated_share_of_delivered)
-                    )
+                    allocated = int(round(delivered * allocated_share))
                     free_sharing = int(round(delivered * cfg.metrics.free_sharing_share))
                     # Regional source difference, deliberately preserved.
                     #

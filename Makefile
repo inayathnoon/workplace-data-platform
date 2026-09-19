@@ -10,9 +10,9 @@ PROFILE ?= demo
 
 .PHONY: setup data load dbt pipeline semantic dq charts test lint types demo dashboard dagster clean
 
-setup:  ## Create the virtualenv and install the project
+setup:  ## Create the virtualenv and install exactly what uv.lock pins
 	uv venv --python 3.11
-	uv pip install -e ".[dev]"
+	uv sync --frozen --extra dev
 	.venv/bin/pre-commit install || true
 
 data:  ## Generate the synthetic source systems

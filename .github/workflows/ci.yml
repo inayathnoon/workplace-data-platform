@@ -21,10 +21,13 @@ jobs:
       - name: Set up Python
         run: uv python install 3.11
 
+      # --frozen installs exactly what uv.lock pins, and fails if the lock
+      # has drifted from pyproject.toml. A repo whose whole claim is
+      # reproducibility should not resolve dependencies afresh on every run.
       - name: Install the project
         run: |
           uv venv --python 3.11
-          uv pip install -e ".[dev]"
+          uv sync --frozen --extra dev
 
       - name: Lint
         run: |

@@ -1,0 +1,68 @@
+version: 2
+
+sources:
+  - name: raw
+    description: >
+      Landing zone for the six source extracts. Loaded by
+      src/workplace_platform/warehouse/loader.py under Pandera contracts;
+      nothing in dbt writes here.
+    schema: raw
+    tables:
+      - name: hr_employee_snapshot
+        description: Daily full snapshot from the HR system, one row per visible employee per day.
+        columns:
+          - name: emp_id
+            tests: [not_null]
+          - name: snapshot_date
+            tests: [not_null]
+          - name: employment_status
+            tests:
+              - not_null
+              - accepted_values:
+                  values: [active, onboarding, resigned, terminated, on_assignment, pre_assignment]
+
+      - name: badge_taps
+        description: >
+          Raw badge reader events in UTC. Contains duplicates within 90 seconds
+          and a share of rows reported a day late; both are handled in staging.
+        columns:
+          - name: emp_id
+            tests: [not_null]
+          - name: tap_ts_utc
+            tests: [not_null]
+          - name: direction
+            tests:
+              - accepted_values:
+                  values: [in, out]
+
+      - name: leave_requests
+        description: Request-grain leave, including pending, cancelled and overlapping requests.
+        columns:
+          - name: leave_id
+            tests: [not_null, unique]
+          - name: status
+            tests:
+              - accepted_values:
+                  values: [approved, pending, cancelled]
+
+      - name: travel_bookings
+        description: Trip-grain business travel.
+        columns:
+          - name: booking_id
+            tests: [not_null, unique]
+
+      - name: workplace_dim
+        description: Space extract at (workplace, tower, floor) grain.
+        columns:
+          - name: workplace_code
+            tests: [not_null]
+          - name: region
+            tests:
+              - accepted_values:
+                  values: [AMER, EMEA, APAC, CN]
+
+      - name: dept_schedule
+        description: Office-day policy at (dept_l2, weekday) grain.
+        columns:
+          - name: dept_l2
+            tests: [not_null]

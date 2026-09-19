@@ -16,7 +16,12 @@ from pathlib import Path
 import pandas as pd
 
 from ..config import DEFECT_MANIFEST, GROUND_TRUTH, RAW_DIR, Config, load_config
-from .employees import build_defect_plan, generate_employees, snapshot_for_date
+from .employees import (
+    build_defect_plan,
+    dept_schedule_table,
+    generate_employees,
+    snapshot_for_date,
+)
 from .leave import generate_leave, leave_days
 from .rng import substream
 from .taps import TapGenerator
@@ -78,6 +83,11 @@ def generate_all(cfg: Config | None = None, clean: bool = True) -> dict:
         snapshots, RAW_DIR, "hr_employee_snapshot"
     )
     del snapshots
+
+    # 6. Office-day policy reference extract.
+    row_counts["dept_schedule"] = _write_table(
+        dept_schedule_table(cfg, master), RAW_DIR, "dept_schedule"
+    )
 
     # 3 and 4. Absence and travel, which gate attendance.
     leave = generate_leave(cfg, master)

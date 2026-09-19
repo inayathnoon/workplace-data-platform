@@ -210,6 +210,37 @@ def generate_employees(cfg: Config, workplaces: pd.DataFrame) -> pd.DataFrame:
     return master
 
 
+def dept_schedule_table(cfg: Config, master: pd.DataFrame) -> pd.DataFrame:
+    """The office-day policy, at (dept_l2, weekday) grain.
+
+    A sixth reference extract, beyond the five feeds in the brief. It has to
+    exist somewhere: "scheduled office day" is a policy fact, not something you
+    can infer from badge data without assuming the answer. Deriving expected
+    attendance from observed attendance would make schedule-compliance
+    tautological - it would always be near 100% by construction.
+    """
+    rows: list[dict] = []
+    seen: dict[str, tuple[int, ...]] = {}
+    for l2, l1, days in zip(
+        master["dept_l2"], master["dept_l1"], master["scheduled_weekdays"], strict=True
+    ):
+        if l2 in seen:
+            continue
+        seen[l2] = days
+        for weekday in range(7):
+            rows.append(
+                {
+                    "dept_l2": l2,
+                    "dept_l1": l1,
+                    "weekday": weekday,
+                    "is_scheduled_office_day": weekday in days,
+                    "required_days_per_week": cfg.planted.scheduled_days_per_week[l1],
+                    "policy_version": "v1",
+                }
+            )
+    return pd.DataFrame(rows)
+
+
 def _assign_managers(master: pd.DataFrame, rng: np.random.Generator) -> np.ndarray:
     manager_of_team = master.groupby("dept_l4")["emp_id"].first().to_dict()
     manager_ids = master["dept_l4"].map(manager_of_team).to_numpy()

@@ -1,0 +1,22 @@
+select
+    w.workplace_code,
+    w.workplace_name,
+    w.city,
+    w.country,
+    w.region,
+    w.timezone,
+    w.has_missing_timezone,
+    w.region = 'CN'                     as is_china_region,
+    w.tower_count,
+    w.floor_count,
+    w.delivered_workstations,
+    w.allocated_workstations,
+    w.free_sharing_workstations,
+    w.delivered_workstations - w.allocated_workstations as unallocated_workstations,
+    w.allocated_workstations + w.free_sharing_workstations as available_workstations,
+    w.net_workstation_area_sqm,
+    round(w.net_workstation_area_sqm / nullif(w.delivered_workstations, 0), 2) as sqm_per_workstation,
+    w.cost_per_workstation_month,
+    w.lease_expiry_date,
+    w.is_space_audited
+from {{ ref('stg_workplace') }} w

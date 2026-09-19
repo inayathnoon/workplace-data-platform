@@ -154,16 +154,29 @@ class TapGenerator:
         travelling = self._index_mask(set(travel_today))
         scheduled = self.schedule[:, weekday] & (weekday < 5)
 
+        # Someone posted to another city is not available to their home
+        # workplace at all, so they neither attend nor count against it.
+        on_assignment = np.array(
+            [
+                s is not None and e is not None and s <= day <= e
+                for s, e in zip(self.assign_start, self.assign_end, strict=True)
+            ]
+        )
+
         base_p = np.where(scheduled, self.propensity, cfg.planted.off_schedule_attendance_rate)
-        can_attend = eligible & ~on_leave
+        can_attend = eligible & ~on_leave & ~on_assignment
 
         draw = self.rng.random(len(self.master))
         attends_home = can_attend & ~travelling & (draw < base_p)
         attends_away = can_attend & travelling & (draw < TRAVEL_TAP_PROBABILITY)
 
-        # Record realised attendance on scheduled office days, by region. Only
-        # home attendance counts: a tap in a city you are visiting is presence,
-        # but not attendance at the workplace you are expected in.
+        # Record realised attendance on scheduled office days, by region.
+        #
+        # The denominator is days on which attendance was actually owed:
+        # employed, scheduled, not on leave, not travelling, not on assignment.
+        # It has to match `is_attendance_expected` in int_employee_day exactly,
+        # or the planted-vs-recovered table in the README compares two
+        # different quantities and the difference gets read as pipeline error.
         denom_mask = can_attend & scheduled & ~travelling
         for region in np.unique(self.region):
             r = self.region == region

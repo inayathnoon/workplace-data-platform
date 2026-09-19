@@ -71,7 +71,7 @@ geography:
     - { name: "Invermere",  country: "Kanton",    region: "CN",    tz: "Asia/Shanghai" }
     - { name: "Juniperfell",country: "Bharatam",  region: "APAC",  tz: "Asia/Kolkata" }
     - { name: "Kirkwall",   country: "Norvik",    region: "EMEA",  tz: "Europe/Copenhagen" }
-    - { name: "Larkspur",   country: "Arcadia",   region: "AMER",  tz: "America/Vancouver" }
+    - { name: "Lindmere",   country: "Arcadia",   region: "AMER",  tz: "America/Vancouver" }
     - { name: "Mossgrave",  country: "Bharatam",  region: "APAC",  tz: "Asia/Kolkata" }
     - { name: "Nettlewick", country: "Levantia",  region: "EMEA",  tz: "Asia/Dubai" }
 

@@ -75,8 +75,11 @@ geography:
     - { name: "Mossgrave",  country: "Bharatam",  region: "APAC",  tz: "Asia/Kolkata" }
     - { name: "Nettlewick", country: "Levantia",  region: "EMEA",  tz: "Asia/Dubai" }
 
-  # Workstation supply per workplace, lognormal around a city-size-scaled mean.
-  workstations_per_workplace: { mean: 1_100, sigma: 0.45, min: 120 }
+  # Workstation supply, expressed per employee rather than as an absolute mean
+  # so that supply tracks headcount across profiles. A fixed mean gave the demo
+  # profile three desks per person and a meaningless waste ratio.
+  workstations_per_employee: 1.15
+  workstations_per_workplace: { sigma: 0.45, min: 60 }
   sqm_per_workstation: { mean: 8.4, sigma: 0.18 }
   towers_per_workplace: { min: 1, max: 3 }
   floors_per_tower: { min: 3, max: 12 }

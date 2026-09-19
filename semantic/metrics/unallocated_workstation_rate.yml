@@ -1,0 +1,43 @@
+name: unallocated_workstation_rate
+display_name: Unallocated Workstation Rate
+owner: space-planning
+metric_type: derived
+
+definition_business: >-
+  The share of delivered desks not assigned to any department. Pure supply-side
+  slack, visible without any attendance data at all.
+definition_technical: unallocated_workstations / delivered_workstations
+
+grain: workplace_day
+entity: workstation
+measure: unallocated_workstations
+time_grain: [day, week, month]
+
+aggregation: weighted_ratio
+time_composition: avg
+
+allowed_dimensions: [local_date, iso_year_week, workplace_code, city, region]
+invalid_dimension_combinations:
+  - "Averaging across workplaces - recompute from components."
+filters: []
+
+numerator:
+  model: fct_workplace_capacity_daily
+  sql: sum(unallocated_workstations)
+denominator:
+  model: fct_workplace_capacity_daily
+  sql: sum(delivered_workstations)
+
+sensitivity_tier: L2
+synonyms: [unallocated, unassigned desks, spare stock, uncommitted desks]
+source_columns:
+  - fct_workplace_capacity_daily.unallocated_workstations
+  - fct_workplace_capacity_daily.delivered_workstations
+upstream_models: [fct_workplace_capacity_daily, dim_workplace]
+downstream_consumers: [space planning review]
+
+version: 1
+changelog:
+  - version: 1
+    date: "2025-06-30"
+    change: Initial definition.

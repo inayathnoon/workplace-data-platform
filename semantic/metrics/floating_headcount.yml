@@ -1,0 +1,42 @@
+name: floating_headcount
+display_name: Floating Headcount
+owner: space-planning
+metric_type: atomic
+
+definition_business: >-
+  People attached to a workplace with no allocated desk of their own. They rely
+  on the free-sharing pool, so they are the population that pool must cover.
+definition_technical: greatest(headcount_incumbent - allocated_workstations, 0)
+
+grain: workplace_day
+entity: employee
+measure: floating_headcount
+time_grain: [day, week, month]
+
+aggregation: sum
+time_composition: avg
+
+allowed_dimensions: [local_date, iso_year_week, workplace_code, city, region]
+invalid_dimension_combinations:
+  - >-
+    Computing from pre-aggregated totals - the floor at zero must be applied per
+    workplace, or a surplus at one site cancels a shortfall at another.
+filters: ["not is_weekend"]
+
+expression:
+  model: fct_workplace_capacity_daily
+  sql: sum(floating_headcount)
+
+sensitivity_tier: L3
+synonyms: [floating headcount, unseated staff, deskless, floaters, hot-desk population]
+source_columns: [fct_workplace_capacity_daily.floating_headcount]
+upstream_models: [fct_workplace_capacity_daily]
+downstream_consumers: [space planning review]
+
+version: 1
+changelog:
+  - version: 1
+    date: "2025-06-30"
+    change: >-
+      Initial definition. The zero floor is applied in the fact table, per
+      workplace-day, precisely so it cannot be undone by aggregation.

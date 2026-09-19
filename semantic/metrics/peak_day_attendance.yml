@@ -1,0 +1,41 @@
+name: peak_day_attendance
+display_name: Peak Day Attendance
+owner: space-planning
+metric_type: derived
+
+definition_business: >-
+  The busiest single day in the period, per workplace. Desks have to exist on
+  the busy day, so this is what capacity is sized against.
+definition_technical: max(attendance_actual) over the period
+
+grain: workplace_day
+entity: employee
+measure: attendance_actual
+time_grain: [week, month]
+
+aggregation: max
+# The one metric here that must NOT average over time. A mean of daily
+# attendance sizes an estate for a Wednesday that never happens; the peak is
+# the constraint. See the README note on why the P90/peak is used for sizing.
+time_composition: max
+
+allowed_dimensions: [iso_year_week, workplace_code, city, region]
+invalid_dimension_combinations:
+  - "Averaging peaks across workplaces - the estate peak is not the mean of site peaks."
+filters: ["not is_weekend"]
+
+expression:
+  model: fct_workplace_capacity_daily
+  sql: max(attendance_actual)
+
+sensitivity_tier: L2
+synonyms: [peak attendance, busiest day, max occupancy, peak day, peak demand]
+source_columns: [fct_workplace_capacity_daily.attendance_actual]
+upstream_models: [fct_workplace_capacity_daily]
+downstream_consumers: [seat_demand_rate, seat_demand_absolute]
+
+version: 1
+changelog:
+  - version: 1
+    date: "2025-06-30"
+    change: Initial definition. Weekends excluded; a weekend peak is not a sizing input.

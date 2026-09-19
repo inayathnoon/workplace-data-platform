@@ -1,0 +1,46 @@
+name: scheduled_office_day_compliance_rate
+display_name: Scheduled Office Day Compliance
+owner: workplace-policy
+metric_type: derived
+
+definition_business: >-
+  Of all days the office-day policy required attendance, the share on which the
+  employee attended. Unlike attendance rate, leave and travel are not excused.
+definition_technical: sum(scheduled_attendance) / sum(scheduled_office_days)
+
+grain: workplace_day
+entity: employee_day
+measure: scheduled_attendance
+time_grain: [day, week, month]
+
+aggregation: weighted_ratio
+time_composition: avg
+
+allowed_dimensions: [local_date, iso_year_week, workplace_code, city, region, dept_l1, dept_l2]
+invalid_dimension_combinations:
+  - "Averaging the rate across departments - recompute from components."
+filters: []
+
+numerator:
+  model: fct_attendance_daily
+  sql: sum(scheduled_attendance)
+denominator:
+  model: fct_attendance_daily
+  sql: sum(scheduled_office_days)
+
+sensitivity_tier: L3
+synonyms: [policy compliance, office day compliance, mandate compliance, rto compliance]
+source_columns:
+  - fct_attendance_daily.scheduled_attendance
+  - fct_attendance_daily.scheduled_office_days
+upstream_models: [int_employee_day, fct_attendance_daily, stg_dept_schedule]
+downstream_consumers: [policy review, regional lead dashboard]
+
+version: 1
+changelog:
+  - version: 1
+    date: "2025-06-30"
+    change: >-
+      Initial definition. Deliberately kept separate from attendance_rate: this
+      one answers "was the policy met", which is a harsher and different
+      question from "did people come in when they could".

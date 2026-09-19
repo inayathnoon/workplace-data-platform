@@ -1,0 +1,47 @@
+name: average_unit_workstation_cost
+display_name: Average Unit Workstation Cost
+owner: workplace-finance
+metric_type: derived
+
+definition_business: >-
+  The average monthly cost of one desk across a group of workplaces, weighted by
+  how many desks each workplace has.
+definition_technical: sum(cost_per_workstation_month * delivered_workstations) / sum(delivered_workstations)
+
+grain: workplace_day
+entity: workstation
+measure: cost_per_workstation_month
+time_grain: [month]
+
+aggregation: weighted_ratio
+time_composition: avg
+
+allowed_dimensions: [workplace_code, city, region, country]
+invalid_dimension_combinations:
+  - >-
+    Taking an unweighted mean across workplaces - a 40-desk satellite would
+    carry the same weight as a 3,000-desk hub.
+filters: []
+
+numerator:
+  model: fct_workplace_capacity_daily
+  sql: sum(cost_per_workstation_month * delivered_workstations)
+denominator:
+  model: fct_workplace_capacity_daily
+  sql: sum(delivered_workstations)
+
+sensitivity_tier: L4
+synonyms: [unit cost, cost per desk, cost per workstation, desk cost, unit workstation cost]
+source_columns:
+  - fct_workplace_capacity_daily.cost_per_workstation_month
+  - fct_workplace_capacity_daily.delivered_workstations
+upstream_models: [fct_workplace_capacity_daily, dim_workplace]
+downstream_consumers: [executive dashboard, finance review]
+
+version: 1
+changelog:
+  - version: 1
+    date: "2025-06-30"
+    change: >-
+      Initial definition. Weighted by delivered desks; the unweighted mean was
+      rejected because it inverts the ranking of expensive small sites.

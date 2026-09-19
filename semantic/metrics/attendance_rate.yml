@@ -1,0 +1,50 @@
+name: attendance_rate
+display_name: Attendance Rate
+owner: workplace-analytics
+metric_type: derived
+
+definition_business: >-
+  Of the days people were expected in the office and able to be, the share on
+  which they actually came in. Approved leave and travel are excluded from both
+  sides.
+definition_technical: sum(attendance_expected_met) / sum(attendance_expected_days)
+
+grain: workplace_day
+entity: employee_day
+measure: attendance_expected_met
+time_grain: [day, week, month]
+
+aggregation: weighted_ratio
+time_composition: avg
+
+allowed_dimensions: [local_date, iso_year_week, workplace_code, city, region, dept_l1, dept_l2]
+invalid_dimension_combinations:
+  - "Averaging the rate across cities - recompute from numerator and denominator instead."
+filters: []
+
+numerator:
+  model: fct_attendance_daily
+  sql: sum(attendance_expected_met)
+denominator:
+  model: fct_attendance_daily
+  sql: sum(attendance_expected_days)
+
+sensitivity_tier: L2
+synonyms: [attendance rate, show rate, rto rate, return to office rate, compliance rate]
+source_columns:
+  - fct_attendance_daily.attendance_expected_met
+  - fct_attendance_daily.attendance_expected_days
+upstream_models: [int_employee_day, fct_attendance_daily]
+downstream_consumers: [executive dashboard, DQ reconciliation]
+
+version: 2
+changelog:
+  - version: 1
+    date: "2025-06-20"
+    change: Initial definition, denominator was all scheduled office days.
+  - version: 2
+    date: "2025-06-30"
+    change: >-
+      Denominator narrowed to days attendance was actually owed. The previous
+      version charged approved leave and business travel as non-attendance,
+      understating the rate by roughly two points.

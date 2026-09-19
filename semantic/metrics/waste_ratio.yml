@@ -1,0 +1,55 @@
+name: waste_ratio
+display_name: Waste Ratio
+owner: space-planning
+metric_type: derived
+
+definition_business: >-
+  The share of available desks that went unused on the day. The headline
+  efficiency number for an estate.
+definition_technical: workstation_waste / available_workstations
+
+grain: workplace_day
+entity: workstation
+measure: workstation_waste
+time_grain: [day, week, month]
+
+aggregation: weighted_ratio
+time_composition: avg
+
+allowed_dimensions: [local_date, iso_year_week, workplace_code, city, region, is_weekend]
+invalid_dimension_combinations:
+  - "Averaging across workplaces - a 20-desk site and a 2,000-desk site do not weigh the same."
+# Weekends carry full desk supply and near-zero attendance, so including them
+# roughly doubles the apparent waste. Excluded by default; a caller who wants
+# seven-day occupancy can pass the filter off explicitly.
+filters: ["not is_weekend"]
+
+numerator:
+  model: fct_workplace_capacity_daily
+  sql: "sum({supply}) - sum(attendance_actual)"
+  variant_term: supply
+  variant_default: allocated_workstations + free_sharing_workstations
+  regional_variants:
+    CN: allocated_workstations
+denominator:
+  model: fct_workplace_capacity_daily
+  sql: "sum({supply})"
+  variant_term: supply
+  variant_default: allocated_workstations + free_sharing_workstations
+  regional_variants:
+    CN: allocated_workstations
+
+sensitivity_tier: L3
+synonyms: [waste ratio, waste rate, desk waste, unused share, inefficiency rate]
+source_columns:
+  - fct_workplace_capacity_daily.allocated_workstations
+  - fct_workplace_capacity_daily.free_sharing_workstations
+  - fct_workplace_capacity_daily.attendance_actual
+upstream_models: [fct_workplace_capacity_daily]
+downstream_consumers: [executive dashboard]
+
+version: 1
+changelog:
+  - version: 1
+    date: "2025-06-30"
+    change: Initial definition.

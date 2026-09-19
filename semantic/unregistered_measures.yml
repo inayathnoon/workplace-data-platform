@@ -1,0 +1,47 @@
+# Measures that exist in a governed fact table but are deliberately not metrics.
+#
+# A governance check that cannot be satisfied gets switched off, so there has to
+# be a way to say "yes, this is a measure, and no, it is not a metric" - in
+# writing, with an owner and a reason. That is what this file is. It is not an
+# escape hatch: every entry is reviewed the same way a metric definition is, and
+# an empty `reason` fails validation just as an unclaimed column does.
+#
+# The test of a good entry is whether you would defend it out loud. "Diagnostic
+# breakdown behind an existing metric" is defensible. "Nobody got round to it"
+# is not, and should be a metric instead.
+
+waivers:
+  - columns:
+      - fct_attendance_daily.leave_days
+      - fct_attendance_daily.travel_days
+      - fct_attendance_daily.assignment_days
+      - fct_attendance_daily.non_office_days
+      - fct_attendance_daily.post_exit_days
+      - fct_attendance_daily.pre_hire_days
+      - fct_attendance_daily.no_show_days
+      - fct_attendance_daily.employee_days
+    owner: workplace-analytics
+    reason: >-
+      Components of the employee-day state cascade. They exist so an attendance
+      number can be decomposed into its reasons, and they are only ever read
+      alongside attendance_rate. Promoting each to a metric would put eight
+      near-duplicate definitions in the catalogue and make the real metrics
+      harder to find.
+
+  - columns:
+      - fct_attendance_daily.avg_span_minutes
+      - fct_attendance_daily.late_reported_tap_days
+      - fct_workplace_capacity_daily.departments_present
+    owner: platform-engineering
+    reason: >-
+      Pipeline diagnostics, consumed by the DQ scorecard rather than by anyone
+      making a space decision. Publishing them as business metrics would invite
+      them into decks where they mean nothing.
+
+  - columns:
+      - fct_workplace_capacity_daily.net_workstation_area_sqm
+    owner: space-planning
+    reason: >-
+      A dimension attribute carried on the fact for query convenience, not a
+      measure of anything that happened on the day. Density metrics belong in a
+      space-efficiency model, which this platform does not own.

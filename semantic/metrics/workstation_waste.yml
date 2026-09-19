@@ -1,0 +1,53 @@
+name: workstation_waste
+display_name: Workstation Waste
+owner: space-planning
+metric_type: atomic
+
+definition_business: >-
+  Desks that were available on the day but nobody used. Not the same as empty
+  desks: a desk nobody is allocated to and nobody sat at counts once, not twice.
+definition_technical: sum(available_workstations) - sum(attendance_actual)
+
+grain: workplace_day
+entity: workstation
+measure: workstation_waste
+time_grain: [day, week, month]
+
+aggregation: sum
+time_composition: avg
+
+allowed_dimensions: [local_date, iso_year_week, workplace_code, city, region, is_weekend]
+invalid_dimension_combinations:
+  - "Summing across local_date - desk-days are not desks."
+# Weekends carry full desk supply and near-zero attendance, so including them
+# roughly doubles the apparent waste. Excluded by default; a caller who wants
+# seven-day occupancy can pass the filter off explicitly.
+filters: ["not is_weekend"]
+
+expression:
+  model: fct_workplace_capacity_daily
+  # Regional variant. In CN the free-sharing pool is already inside
+  # allocated_workstations; adding them there double-counts about 8% of supply.
+  # One metric name, two source semantics, resolved here.
+  sql: "sum({supply}) - sum(attendance_actual)"
+  variant_term: supply
+  variant_default: allocated_workstations + free_sharing_workstations
+  regional_variants:
+    CN: allocated_workstations
+
+sensitivity_tier: L3
+synonyms: [waste, empty desks, unused desks, spare capacity, idle workstations, slack]
+source_columns:
+  - fct_workplace_capacity_daily.workstation_waste
+  - fct_workplace_capacity_daily.available_workstations
+  - fct_workplace_capacity_daily.allocated_workstations
+  - fct_workplace_capacity_daily.free_sharing_workstations
+  - fct_workplace_capacity_daily.attendance_actual
+upstream_models: [fct_workplace_capacity_daily, dim_workplace]
+downstream_consumers: [waste_ratio, space planning review]
+
+version: 1
+changelog:
+  - version: 1
+    date: "2025-06-30"
+    change: Initial definition, with the CN supply-column reconciliation built in.

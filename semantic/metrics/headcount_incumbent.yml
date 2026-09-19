@@ -1,0 +1,42 @@
+name: headcount_incumbent
+display_name: Incumbent Headcount
+owner: workplace-analytics
+metric_type: atomic
+
+definition_business: >-
+  The number of people employed and attached to a workplace on a given day,
+  whether or not they were expected in the office.
+definition_technical: sum(headcount_incumbent)
+
+grain: workplace_day
+entity: employee
+measure: headcount_incumbent
+time_grain: [day, week, month]
+
+aggregation: sum
+# Headcount is a stock, not a flow: adding Monday's headcount to Tuesday's is
+# meaningless. Across entities it sums, across time it averages.
+time_composition: avg
+
+allowed_dimensions: [local_date, iso_year_week, workplace_code, city, region, is_weekend]
+invalid_dimension_combinations:
+  - "Summing across local_date - headcount is a stock and must be averaged over time."
+filters: []
+
+expression:
+  model: fct_workplace_capacity_daily
+  sql: sum(headcount_incumbent)
+
+sensitivity_tier: L2
+synonyms: [headcount, incumbent headcount, hc, population, employees, staff count]
+source_columns:
+  - fct_workplace_capacity_daily.headcount_incumbent
+  - fct_attendance_daily.headcount_incumbent
+upstream_models: [int_employee_day, fct_workplace_capacity_daily]
+downstream_consumers: [attendance_rate, incumbent_vacancy_rate, floating_headcount, seat_demand_rate]
+
+version: 1
+changelog:
+  - version: 1
+    date: "2025-06-30"
+    change: Initial definition. Counts employed days, not reported-active days.

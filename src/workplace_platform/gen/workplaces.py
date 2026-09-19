@@ -31,6 +31,11 @@ def generate_workplaces(cfg: Config) -> pd.DataFrame:
     per_city = {c.name: 1 + int(extra_counts[i]) for i, c in enumerate(cities)}
 
     ws_cfg = cfg.geography.workstations_per_workplace
+    # Mean supply per workplace, derived from headcount so the estate is
+    # plausibly sized at any profile.
+    ws_mean = (
+        cfg.profile.n_employees * cfg.geography.workstations_per_employee / n_workplaces
+    )
     sqm_cfg = cfg.geography.sqm_per_workstation
     tower_cfg = cfg.geography.towers_per_workplace
     floor_cfg = cfg.geography.floors_per_tower
@@ -45,7 +50,7 @@ def generate_workplaces(cfg: Config) -> pd.DataFrame:
             delivered_total = int(
                 max(
                     ws_cfg["min"],
-                    lognormal_from_mean(rng, ws_cfg["mean"] * city_scale, ws_cfg["sigma"], 1)[0],
+                    lognormal_from_mean(rng, ws_mean * city_scale, ws_cfg["sigma"], 1)[0],
                 )
             )
             n_towers = int(rng.integers(tower_cfg["min"], tower_cfg["max"] + 1))
@@ -87,6 +92,17 @@ def generate_workplaces(cfg: Config) -> pd.DataFrame:
                         round(delivered * cfg.metrics.allocated_share_of_delivered)
                     )
                     free_sharing = int(round(delivered * cfg.metrics.free_sharing_share))
+                    # Regional source difference, deliberately preserved.
+                    #
+                    # The CN space system reports the free-sharing pool INSIDE
+                    # allocated_workstations; everywhere else the two columns
+                    # are disjoint. Same column name, different meaning. Adding
+                    # them everywhere double-counts CN capacity by ~8%, and
+                    # since the column names match, nothing errors - the number
+                    # is just wrong. Reconciling this behind one metric name is
+                    # the reason the semantic layer exists.
+                    if city.region == "CN":
+                        allocated = allocated + free_sharing
                     rows.append(
                         {
                             "workplace_code": code,

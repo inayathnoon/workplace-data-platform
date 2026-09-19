@@ -1,5 +1,5 @@
 -- Generated from semantic/metrics/incumbent_vacancy_rate.yml. Do not edit.
--- The share of allocated desks with nobody assigned to them. Measures the gap between allocation and population, independent of whether people attended.
+-- The share of allocated desks with nobody assigned to them. Goes negative when a site has more people attached to it than allocated desks, which is over-subscription rather than an error.
 
 with daily as (
     select

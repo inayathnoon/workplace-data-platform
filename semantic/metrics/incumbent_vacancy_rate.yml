@@ -4,8 +4,9 @@ owner: space-planning
 metric_type: derived
 
 definition_business: >-
-  The share of allocated desks with nobody assigned to them. Measures the gap
-  between allocation and population, independent of whether people attended.
+  The share of allocated desks with nobody assigned to them. Goes negative when
+  a site has more people attached to it than allocated desks, which is
+  over-subscription rather than an error.
 definition_technical: (allocated_workstations - headcount_incumbent) / allocated_workstations
 
 grain: workplace_day
@@ -43,3 +44,6 @@ changelog:
     change: >-
       Initial definition. Weekends filtered out by default: allocation is a
       weekday concept and including weekends halves the apparent population.
+      Left unfloored on purpose - the negative value is the signal that a site
+      is over-subscribed, and floating_headcount is the floored counterpart for
+      callers who want a count of unseated people instead.

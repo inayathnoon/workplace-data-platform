@@ -33,12 +33,18 @@ class TapDefectCounts:
     duplicates: int = 0
     late_arriving: int = 0
     after_termination: int = 0
+    # Employees, not rows. The row count is not stable end to end: a
+    # post-termination tap can itself be duplicated by the re-swipe injector,
+    # and staging then drops the duplicates that fall inside the 90-second
+    # window. The number of people whose badge still worked survives both.
+    after_termination_employees: set = field(default_factory=set)
 
     def as_dict(self) -> dict[str, int]:
         return {
             "tap_duplicates_within_90s": self.duplicates,
             "tap_late_arriving": self.late_arriving,
-            "tap_after_termination": self.after_termination,
+            "tap_after_termination_rows": self.after_termination,
+            "tap_after_termination_employees": len(self.after_termination_employees),
         }
 
 
@@ -330,6 +336,7 @@ class TapGenerator:
         )
         extra["is_post_termination"] = True
         self.defects.after_termination += len(extra)
+        self.defects.after_termination_employees.update(extra["emp_id"].unique())
         return pd.concat([frame, extra], ignore_index=True)
 
     def _inject_duplicates(self, frame: pd.DataFrame) -> pd.DataFrame:

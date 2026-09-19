@@ -1,0 +1,30 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        # dbt models are Jinja, and a schema.yml is plain YAML; both are fine.
+        exclude: ^dbt/target/
+      - id: check-added-large-files
+        args: [--maxkb=600]
+      - id: check-merge-conflict
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      # Runs here rather than only in CI: a metric definition that has drifted
+      # from the warehouse is cheapest to fix in the commit that caused it.
+      - id: validate-metrics
+        name: metric registry agrees with the warehouse
+        entry: .venv/bin/python -m workplace_platform.semantic.validate
+        language: system
+        pass_filenames: false
+        files: ^(semantic/|dbt/models/marts/)

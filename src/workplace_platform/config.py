@@ -107,6 +107,8 @@ class MetricParams(_Base):
     seat_demand_buffer: float
     free_sharing_share: float
     allocated_share_of_delivered: float
+    allocated_share_sigma: float
+    allocated_share_bounds: list[float]
     cost_per_workstation_month: dict[str, float]
 
 

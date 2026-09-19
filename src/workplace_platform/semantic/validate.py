@@ -54,8 +54,15 @@ GOVERNED_MODELS = {"fct_attendance_daily", "fct_workplace_capacity_daily"}
 WAIVER_PATH = SEMANTIC_DIR / "unregistered_measures.yml"
 
 NUMERIC_TYPES = {
-    "BIGINT", "INTEGER", "SMALLINT", "TINYINT", "HUGEINT",
-    "DOUBLE", "FLOAT", "DECIMAL", "REAL",
+    "BIGINT",
+    "INTEGER",
+    "SMALLINT",
+    "TINYINT",
+    "HUGEINT",
+    "DOUBLE",
+    "FLOAT",
+    "DECIMAL",
+    "REAL",
 }
 
 

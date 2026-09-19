@@ -23,7 +23,6 @@ from ..config import (
 from . import checks as _checks  # noqa: F401  - importing registers the checks
 from .base import Category, CheckResult, Status, registered_checks
 
-
 EXPECTATIONS_PATH = REPO_ROOT / "conf" / "dq_expectations.yml"
 
 
@@ -55,9 +54,7 @@ class Scorecard:
         a real failure later."""
         statuses = {r.name: r.status for r in self.results}
         return sorted(
-            name
-            for name in self.expected_failures
-            if statuses.get(name) not in (Status.FAIL, None)
+            name for name in self.expected_failures if statuses.get(name) not in (Status.FAIL, None)
         )
 
     @property
@@ -98,8 +95,7 @@ class Scorecard:
             lines.append(f"  UNEXPECTED FAILURE: {result.name} - {result.explanation}")
         for name in self.stale_expectations:
             lines.append(
-                f"  STALE EXPECTATION: {name} now passes; remove it from "
-                "conf/dq_expectations.yml"
+                f"  STALE EXPECTATION: {name} now passes; remove it from conf/dq_expectations.yml"
             )
         return "\n".join(lines)
 
@@ -169,10 +165,10 @@ def defect_recall(scorecard: Scorecard) -> list[dict]:
     )
     taps = found.get("tap_after_termination")
     add(
-        "Badge: taps after termination (any lag)",
-        planted.get("tap_after_termination", 0),
+        "Badge: people badging after termination",
+        planted.get("tap_after_termination_employees", 0),
         "tap_after_termination",
-        None if taps is None else taps.details.get("taps_after_termination_any"),
+        None if taps is None else taps.details.get("employees_after_termination_any"),
     )
     return rows
 
@@ -211,14 +207,27 @@ def render_scorecard(scorecard: Scorecard, path=None):
     y = 0.0
     yticks, ylabels = [], []
     for category in order:
-        ax.text(-0.02, -y, category.value.replace("_", " ").upper(), fontsize=9,
-                fontweight="bold", color="#33404f", ha="right", va="center",
-                transform=ax.get_yaxis_transform())
+        ax.text(
+            -0.02,
+            -y,
+            category.value.replace("_", " ").upper(),
+            fontsize=9,
+            fontweight="bold",
+            color="#33404f",
+            ha="right",
+            va="center",
+            transform=ax.get_yaxis_transform(),
+        )
         y += 1
         for result in by_category[category]:
             value = 1.0 if result.value is None else max(float(result.value), 0.0)
-            ax.barh(-y, max(value, 0.4) if value else 0.4, color=colours[result.status],
-                    height=0.62, edgecolor="none")
+            ax.barh(
+                -y,
+                max(value, 0.4) if value else 0.4,
+                color=colours[result.status],
+                height=0.62,
+                edgecolor="none",
+            )
             yticks.append(-y)
             ylabels.append(result.name)
             y += 1
@@ -231,7 +240,8 @@ def render_scorecard(scorecard: Scorecard, path=None):
     ax.set_title(
         f"Data quality scorecard - {counts['pass']} pass, {counts['warn']} warn, "
         f"{counts['fail']} fail",
-        fontsize=12, pad=14,
+        fontsize=12,
+        pad=14,
     )
     ax.spines[["top", "right"]].set_visible(False)
     ax.grid(axis="x", alpha=0.25)

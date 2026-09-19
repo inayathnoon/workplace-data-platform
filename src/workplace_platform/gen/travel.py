@@ -24,8 +24,15 @@ def generate_travel(cfg: Config, master: pd.DataFrame) -> pd.DataFrame:
     trips = rng.binomial(n_days, tv["trip_hazard"], size=n_emp)
     total = int(trips.sum())
     columns = [
-        "booking_id", "emp_id", "origin_city", "destination_city", "depart_date",
-        "return_date", "booking_status", "hotel_flag", "flight_flag",
+        "booking_id",
+        "emp_id",
+        "origin_city",
+        "destination_city",
+        "depart_date",
+        "return_date",
+        "booking_status",
+        "hotel_flag",
+        "flight_flag",
     ]
     if total == 0:
         return pd.DataFrame(columns=columns)
@@ -44,25 +51,27 @@ def generate_travel(cfg: Config, master: pd.DataFrame) -> pd.DataFrame:
     depart_offsets = rng.integers(0, n_days, size=total)
     durations = rng.integers(tv["duration_days"]["min"], tv["duration_days"]["max"] + 1, size=total)
     depart = np.array([cfg.start_date + timedelta(days=int(o)) for o in depart_offsets])
-    ret = np.array(
-        [d + timedelta(days=int(k)) for d, k in zip(depart, durations, strict=True)]
-    )
+    ret = np.array([d + timedelta(days=int(k)) for d, k in zip(depart, durations, strict=True)])
 
     status = np.where(rng.random(total) < tv["cancelled_share"], "cancelled", "confirmed")
 
-    return pd.DataFrame(
-        {
-            "booking_id": [f"TR{i:08d}" for i in range(total)],
-            "emp_id": emp_ids,
-            "origin_city": origins,
-            "destination_city": destinations,
-            "depart_date": depart,
-            "return_date": ret,
-            "booking_status": status,
-            "hotel_flag": rng.random(total) < tv["hotel_share"],
-            "flight_flag": rng.random(total) < tv["flight_share"],
-        }
-    ).sort_values(["emp_id", "depart_date"]).reset_index(drop=True)
+    return (
+        pd.DataFrame(
+            {
+                "booking_id": [f"TR{i:08d}" for i in range(total)],
+                "emp_id": emp_ids,
+                "origin_city": origins,
+                "destination_city": destinations,
+                "depart_date": depart,
+                "return_date": ret,
+                "booking_status": status,
+                "hotel_flag": rng.random(total) < tv["hotel_share"],
+                "flight_flag": rng.random(total) < tv["flight_share"],
+            }
+        )
+        .sort_values(["emp_id", "depart_date"])
+        .reset_index(drop=True)
+    )
 
 
 def travel_days(df: pd.DataFrame) -> dict[tuple[str, object], str]:

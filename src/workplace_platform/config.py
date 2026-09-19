@@ -40,6 +40,7 @@ class City(_Base):
 
 class Geography(_Base):
     cities: list[City]
+    workstations_per_employee: float
     workstations_per_workplace: dict[str, float]
     sqm_per_workstation: dict[str, float]
     towers_per_workplace: dict[str, int]

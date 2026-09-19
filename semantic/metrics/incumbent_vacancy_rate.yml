@@ -1,0 +1,45 @@
+name: incumbent_vacancy_rate
+display_name: Incumbent Vacancy Rate
+owner: space-planning
+metric_type: derived
+
+definition_business: >-
+  The share of allocated desks with nobody assigned to them. Measures the gap
+  between allocation and population, independent of whether people attended.
+definition_technical: (allocated_workstations - headcount_incumbent) / allocated_workstations
+
+grain: workplace_day
+entity: workstation
+measure: headcount_incumbent
+time_grain: [day, week, month]
+
+aggregation: weighted_ratio
+time_composition: avg
+
+allowed_dimensions: [local_date, iso_year_week, workplace_code, city, region]
+invalid_dimension_combinations:
+  - "Averaging across workplaces - recompute from components."
+filters: ["not is_weekend"]
+
+numerator:
+  model: fct_workplace_capacity_daily
+  sql: sum(allocated_workstations) - sum(headcount_incumbent)
+denominator:
+  model: fct_workplace_capacity_daily
+  sql: sum(allocated_workstations)
+
+sensitivity_tier: L3
+synonyms: [incumbent vacancy, allocation gap, over-allocation, unassigned desks]
+source_columns:
+  - fct_workplace_capacity_daily.allocated_workstations
+  - fct_workplace_capacity_daily.headcount_incumbent
+upstream_models: [fct_workplace_capacity_daily]
+downstream_consumers: [space planning review]
+
+version: 1
+changelog:
+  - version: 1
+    date: "2025-06-30"
+    change: >-
+      Initial definition. Weekends filtered out by default: allocation is a
+      weekday concept and including weekends halves the apparent population.

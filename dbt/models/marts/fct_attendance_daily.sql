@@ -7,6 +7,7 @@
 
 select
     ed.local_date,
+    strftime(ed.local_date, '%Y-W%V')                           as iso_year_week,
     ed.expected_workplace                                       as workplace_code,
     w.city,
     w.region,
@@ -36,4 +37,4 @@ select
 from {{ ref('int_employee_day') }} ed
 left join {{ ref('stg_workplace') }} w
     on ed.expected_workplace = w.workplace_code
-group by 1, 2, 3, 4, 5, 6
+group by 1, 2, 3, 4, 5, 6, 7

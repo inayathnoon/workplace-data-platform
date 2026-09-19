@@ -1,0 +1,47 @@
+name: attendance_daily
+display_name: Daily Attendance
+owner: workplace-analytics
+metric_type: atomic
+
+definition_business: >-
+  The number of people who badged into a workplace on a given day, counted once
+  each however many times they tapped.
+definition_technical: sum(attendance_actual)
+
+grain: workplace_day
+entity: employee
+measure: attendance_actual
+time_grain: [day, week, month]
+
+aggregation: sum
+time_composition: avg
+
+allowed_dimensions: [local_date, iso_year_week, workplace_code, city, region, is_weekend]
+invalid_dimension_combinations:
+  - "Summing across local_date - returns person-days, not people. Use peak_day_attendance or average."
+# Weekends carry full desk supply and near-zero attendance, so including them
+# roughly doubles the apparent waste. Excluded by default; a caller who wants
+# seven-day occupancy can pass the filter off explicitly.
+filters: ["not is_weekend"]
+
+expression:
+  model: fct_workplace_capacity_daily
+  sql: sum(attendance_actual)
+
+sensitivity_tier: L2
+synonyms: [attendance, occupancy, people in, badged in, footfall, present, turnout]
+source_columns:
+  - fct_workplace_capacity_daily.attendance_actual
+  # The same measure computed at expected-workplace grain, used when the
+  # question is about a department rather than a building.
+  - fct_attendance_daily.attendance_daily
+upstream_models: [int_employee_day, fct_workplace_capacity_daily]
+downstream_consumers: [attendance_rate, workstation_waste, peak_day_attendance, workstation_vacancy_rate]
+
+version: 1
+changelog:
+  - version: 1
+    date: "2025-06-30"
+    change: >-
+      Initial definition. Counted at the workplace people actually tapped, on
+      the business day the tap belongs to after the overnight-shift rule.

@@ -1,0 +1,43 @@
+name: seat_demand_absolute
+display_name: Seat Demand (Desks)
+owner: space-planning
+metric_type: composite
+
+definition_business: >-
+  The number of desks a workplace needs, in desks rather than as a share. This
+  is the number that goes into a lease decision.
+definition_technical: seat_demand_rate * headcount_incumbent
+
+grain: workplace_week
+entity: workstation
+measure: attendance_actual
+time_grain: [week, month]
+
+aggregation: sum
+time_composition: max
+
+allowed_dimensions: [iso_year_week, workplace_code, city, region]
+invalid_dimension_combinations:
+  - >-
+    Summing across weeks - the estate needs the desks in the worst week, not the
+    sum of every week's requirement.
+filters: ["not is_weekend"]
+
+components: [seat_demand_rate, headcount_incumbent]
+composite_formula: "seat_demand_rate * headcount_incumbent"
+parameters: []
+
+sensitivity_tier: L3
+synonyms: [required desks, desks needed, seat requirement, demand in desks, sizing]
+source_columns: []
+upstream_models: [fct_workplace_capacity_daily]
+downstream_consumers: [space planning review, lease review]
+
+version: 1
+changelog:
+  - version: 1
+    date: "2025-06-30"
+    change: >-
+      Initial definition. A composite of a composite, which is the point: the
+      buffer is applied once, inside seat_demand_rate, and cannot be applied
+      twice by accident here.

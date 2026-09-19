@@ -1,0 +1,48 @@
+name: workstation_vacancy_rate
+display_name: Workstation Vacancy Rate
+owner: space-planning
+metric_type: derived
+
+definition_business: >-
+  The share of delivered desks left empty on the day, measured against
+  everything built rather than against what was made available.
+definition_technical: (delivered_workstations - attendance_actual) / delivered_workstations
+
+grain: workplace_day
+entity: workstation
+measure: attendance_actual
+time_grain: [day, week, month]
+
+aggregation: weighted_ratio
+time_composition: avg
+
+allowed_dimensions: [local_date, iso_year_week, workplace_code, city, region, is_weekend]
+invalid_dimension_combinations:
+  - "Averaging across workplaces - recompute from components."
+# Weekends carry full desk supply and near-zero attendance, so including them
+# roughly doubles the apparent waste. Excluded by default; a caller who wants
+# seven-day occupancy can pass the filter off explicitly.
+filters: ["not is_weekend"]
+
+numerator:
+  model: fct_workplace_capacity_daily
+  sql: sum(delivered_workstations) - sum(attendance_actual)
+denominator:
+  model: fct_workplace_capacity_daily
+  sql: sum(delivered_workstations)
+
+sensitivity_tier: L3
+synonyms: [vacancy, vacancy rate, empty rate, desk vacancy, unoccupied rate]
+source_columns:
+  - fct_workplace_capacity_daily.delivered_workstations
+  - fct_workplace_capacity_daily.attendance_actual
+upstream_models: [fct_workplace_capacity_daily]
+downstream_consumers: [regional lead dashboard]
+
+version: 1
+changelog:
+  - version: 1
+    date: "2025-06-30"
+    change: >-
+      Initial definition. Denominator is delivered, not available - that is the
+      difference from waste_ratio, and the reason both exist.

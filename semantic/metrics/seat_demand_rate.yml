@@ -1,0 +1,42 @@
+name: seat_demand_rate
+display_name: Seat Demand Rate
+owner: space-planning
+metric_type: composite
+
+definition_business: >-
+  The share of a workplace's population that needs a desk at the same time,
+  taken from the busiest day of the week plus a planning buffer.
+definition_technical: (peak_day_attendance / headcount_incumbent) * (1 + seat_demand_buffer)
+
+grain: workplace_week
+entity: employee
+measure: attendance_actual
+time_grain: [week, month]
+
+aggregation: ratio
+time_composition: max
+
+allowed_dimensions: [iso_year_week, workplace_code, city, region]
+invalid_dimension_combinations:
+  - "Averaging across weeks - the sizing input is the worst week, not the typical one."
+filters: ["not is_weekend"]
+
+components: [peak_day_attendance, headcount_incumbent]
+composite_formula: "(peak_day_attendance / nullif(headcount_incumbent, 0)) * (1 + {seat_demand_buffer})"
+parameters: [seat_demand_buffer]
+
+sensitivity_tier: L3
+synonyms: [seat demand, desk demand ratio, sharing ratio, demand rate, seats per head]
+source_columns: []
+upstream_models: [fct_workplace_capacity_daily]
+downstream_consumers: [seat_demand_absolute, space planning review]
+
+version: 1
+changelog:
+  - version: 1
+    date: "2025-06-30"
+    change: >-
+      Initial definition. Composite by construction: it must reuse the same
+      peak_day_attendance and headcount_incumbent the rest of the platform uses,
+      because a seat demand computed from its own private SQL is how two teams
+      end up sizing the same floor differently.

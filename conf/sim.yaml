@@ -1,0 +1,217 @@
+# ---------------------------------------------------------------------------
+# Simulator configuration. Everything downstream is a function of this file.
+#
+# Every number in this repository is traceable to this config: the generator
+# plants the effects declared here, and the pipeline's job is to recover them.
+# Nothing here describes any real organisation.
+# ---------------------------------------------------------------------------
+
+seed: 20240917
+
+# Active scale profile. Override with `WDP_PROFILE=full make data`.
+profile: demo
+
+profiles:
+  # Runs end to end in well under three minutes on a laptop.
+  demo:
+    n_employees: 4_000
+    n_days: 14
+    n_cities: 8
+    n_workplaces: 12
+    end_date: "2025-06-30"
+
+  # The size the brief describes. Generates ~35M badge taps; use Polars paths.
+  full:
+    n_employees: 120_000
+    n_days: 180
+    n_cities: 40
+    n_workplaces: 150
+    end_date: "2025-06-30"
+
+# ---------------------------------------------------------------------------
+# Geography. City names are invented. Timezones are real IANA identifiers
+# because timezone maths must be genuinely exercised, not faked.
+# ---------------------------------------------------------------------------
+geography:
+  cities:
+    - { name: "Aurelia",    country: "Arcadia",   region: "AMER",  tz: "America/New_York" }
+    - { name: "Brightmoor", country: "Arcadia",   region: "AMER",  tz: "America/Chicago" }
+    - { name: "Calderon",   country: "Arcadia",   region: "AMER",  tz: "America/Los_Angeles" }
+    - { name: "Dunmere",    country: "Albion",    region: "EMEA",  tz: "Europe/London" }
+    - { name: "Eldoris",    country: "Rhenia",    region: "EMEA",  tz: "Europe/Berlin" }
+    - { name: "Fairhaven",  country: "Rhenia",    region: "EMEA",  tz: "Europe/Madrid" }
+    - { name: "Granthorpe", country: "Nihon-do",  region: "APAC",  tz: "Asia/Tokyo" }
+    - { name: "Highvale",   country: "Sundara",   region: "APAC",  tz: "Asia/Singapore" }
+    - { name: "Ironwold",   country: "Kanton",    region: "CN",    tz: "Asia/Shanghai" }
+    - { name: "Jinhaven",   country: "Kanton",    region: "CN",    tz: "Asia/Shanghai" }
+    - { name: "Kestrelby",  country: "Kanton",    region: "CN",    tz: "Asia/Shanghai" }
+    - { name: "Lyrangard",  country: "Norvik",    region: "EMEA",  tz: "Europe/Stockholm" }
+    - { name: "Marrowgate", country: "Arcadia",   region: "AMER",  tz: "America/Denver" }
+    - { name: "Northwick",  country: "Albion",    region: "EMEA",  tz: "Europe/Dublin" }
+    - { name: "Orenshold",  country: "Sundara",   region: "APAC",  tz: "Asia/Kuala_Lumpur" }
+    - { name: "Pellworth",  country: "Nihon-do",  region: "APAC",  tz: "Asia/Seoul" }
+    - { name: "Quillon",    country: "Arcadia",   region: "AMER",  tz: "America/Toronto" }
+    - { name: "Ravensmere", country: "Kanton",    region: "CN",    tz: "Asia/Shanghai" }
+    - { name: "Stonebury",  country: "Kanton",    region: "CN",    tz: "Asia/Chongqing" }
+    - { name: "Thornfield", country: "Albion",    region: "EMEA",  tz: "Europe/London" }
+    - { name: "Ulverston",  country: "Norvik",    region: "EMEA",  tz: "Europe/Oslo" }
+    - { name: "Veyrune",    country: "Gallica",   region: "EMEA",  tz: "Europe/Paris" }
+    - { name: "Westmarch",  country: "Arcadia",   region: "AMER",  tz: "America/Phoenix" }
+    - { name: "Xanthe",     country: "Hellenia",  region: "EMEA",  tz: "Europe/Athens" }
+    - { name: "Yarrowmoor", country: "Sundara",   region: "APAC",  tz: "Asia/Jakarta" }
+    - { name: "Zephyrion",  country: "Nihon-do",  region: "APAC",  tz: "Asia/Tokyo" }
+    - { name: "Ashcombe",   country: "Austrine",  region: "APAC",  tz: "Australia/Sydney" }
+    - { name: "Belmonte",   country: "Ibera",     region: "EMEA",  tz: "Europe/Lisbon" }
+    - { name: "Cindervale", country: "Kanton",    region: "CN",    tz: "Asia/Shanghai" }
+    - { name: "Drossmere",  country: "Rhenia",    region: "EMEA",  tz: "Europe/Vienna" }
+    - { name: "Emberlyn",   country: "Arcadia",   region: "AMER",  tz: "America/Sao_Paulo" }
+    - { name: "Foxhollow",  country: "Arcadia",   region: "AMER",  tz: "America/Mexico_City" }
+    - { name: "Glimmerton", country: "Sundara",   region: "APAC",  tz: "Asia/Manila" }
+    - { name: "Hollowbrook",country: "Albion",    region: "EMEA",  tz: "Europe/London" }
+    - { name: "Invermere",  country: "Kanton",    region: "CN",    tz: "Asia/Shanghai" }
+    - { name: "Juniperfell",country: "Bharatam",  region: "APAC",  tz: "Asia/Kolkata" }
+    - { name: "Kirkwall",   country: "Norvik",    region: "EMEA",  tz: "Europe/Copenhagen" }
+    - { name: "Larkspur",   country: "Arcadia",   region: "AMER",  tz: "America/Vancouver" }
+    - { name: "Mossgrave",  country: "Bharatam",  region: "APAC",  tz: "Asia/Kolkata" }
+    - { name: "Nettlewick", country: "Levantia",  region: "EMEA",  tz: "Asia/Dubai" }
+
+  # Workstation supply per workplace, lognormal around a city-size-scaled mean.
+  workstations_per_workplace: { mean: 1_100, sigma: 0.45, min: 120 }
+  sqm_per_workstation: { mean: 8.4, sigma: 0.18 }
+  towers_per_workplace: { min: 1, max: 3 }
+  floors_per_tower: { min: 3, max: 12 }
+  space_audited_share: 0.72
+  lease_expiry_window_days: { min: 120, max: 2_200 }
+
+# ---------------------------------------------------------------------------
+# Workforce. Four-level department hierarchy; sizes are deliberately skewed so
+# aggregation logic has to cope with a long tail of tiny teams.
+# ---------------------------------------------------------------------------
+workforce:
+  departments_l1: ["Engineering", "Product", "Commercial", "Operations", "Corporate"]
+  l2_per_l1: { min: 2, max: 4 }
+  l3_per_l2: { min: 2, max: 5 }
+  l4_per_l3: { min: 2, max: 6 }
+  team_size: { mean: 34, sigma: 0.8, min: 3 }
+
+  employee_type_mix:
+    FTE: 0.78
+    intern: 0.05
+    contractor: 0.11
+    BPO: 0.06
+
+  employment_status_mix:
+    active: 0.880
+    onboarding: 0.022
+    resigned: 0.030
+    terminated: 0.038
+    on_assignment: 0.022
+    pre_assignment: 0.008
+
+  badge_type_mix:
+    permanent: 0.84
+    temporary: 0.11
+    visitor_escort: 0.05
+
+  tenure_days: { mean: 900, sigma: 1.1, max: 6_000 }
+  # Share of employees whose theory_workplace differs from their base city's
+  # primary workplace - the reason expected-vs-actual resolution is non-trivial.
+  cross_workplace_share: 0.18
+
+# ---------------------------------------------------------------------------
+# PLANTED GROUND TRUTH. The pipeline must recover these.
+# ---------------------------------------------------------------------------
+planted:
+  # Scheduled office days per week, by L1 department.
+  scheduled_days_per_week:
+    Engineering: 3
+    Product: 3
+    Commercial: 4
+    Operations: 5
+    Corporate: 4
+
+  # Weekday preference weights (Mon..Fri) applied to scheduled-day selection.
+  weekday_weights: [0.80, 1.15, 1.25, 1.10, 0.70]
+
+  # Attendance rate on a scheduled office day, by region. This is the headline
+  # planted effect: `attendance_rate` computed from the marts must recover it.
+  attendance_rate_by_region:
+    AMER: 0.62
+    EMEA: 0.58
+    APAC: 0.71
+    CN: 0.79
+
+  # Per-employee propensity dispersion around the regional mean.
+  propensity_concentration: 12.0
+
+  # Probability an employee taps in on a NON-scheduled day.
+  off_schedule_attendance_rate: 0.07
+
+  leave:
+    daily_hazard: 0.014
+    duration_days: { mean: 2.4, sigma: 0.9, max: 20 }
+    type_mix: { annual: 0.55, sick: 0.22, parental: 0.06, unpaid: 0.05, comp: 0.12 }
+    status_mix: { approved: 0.88, pending: 0.07, cancelled: 0.05 }
+    retro_applied_share: 0.09      # applied_ts after start_date
+    overlapping_share: 0.04        # overlaps an existing request for the same employee
+
+  travel:
+    trip_hazard: 0.0035
+    duration_days: { min: 1, max: 9 }
+    hotel_share: 0.81
+    flight_share: 0.93
+    cancelled_share: 0.06
+
+# ---------------------------------------------------------------------------
+# Badge tap behaviour.
+# ---------------------------------------------------------------------------
+taps:
+  arrival_hour: { mean: 9.3, sigma: 1.05 }          # workplace-local
+  workday_hours: { mean: 8.6, sigma: 1.6, min: 0.4 }
+  # Per-workplace shift of the arrival curve, so cities differ.
+  workplace_arrival_shift_sigma: 0.55
+  midday_exit_probability: 0.34                     # an out/in pair around lunch
+  overnight_worker_share: 0.021                     # last tap after local midnight
+  device_count_per_floor: 2
+
+# ---------------------------------------------------------------------------
+# DELIBERATE DEFECTS. The DQ framework must catch these, and the generator
+# writes the exact injected counts to data/raw/_defect_manifest.json so the
+# tests can assert on recall rather than trusting a green dashboard.
+# ---------------------------------------------------------------------------
+defects:
+  hr_resigned_still_active_share: 0.004     # of resigned employees
+  hr_resigned_still_active_days: { min: 1, max: 9 }
+  hr_null_base_city_share: 0.002            # of snapshot rows
+  hr_rows_before_hire_date: 12              # absolute count
+  tap_duplicate_within_90s_share: 0.011
+  tap_late_arriving_share: 0.03             # +1 day reporting lateness
+  tap_after_termination_share: 0.0015       # taps 0-14 days past termination
+  workplace_null_timezone: 1                # absolute count
+
+# ---------------------------------------------------------------------------
+# Data quality thresholds.
+# ---------------------------------------------------------------------------
+dq:
+  freshness_sla_hours:
+    hr_employee_snapshot: 26
+    badge_taps: 50          # allows for the 1-day reporting lateness
+    leave_requests: 26
+    travel_bookings: 26
+    workplace_dim: 168
+  psi_warn: 0.10
+  psi_fail: 0.25
+  psi_trailing_days: 28
+  reconciliation_tolerance: 0.005   # 0.5% between staging-derived and mart-derived
+  volume_anomaly_z_warn: 2.5
+  volume_anomaly_z_fail: 4.0
+  tap_after_termination_grace_days: 7
+
+# ---------------------------------------------------------------------------
+# Metric parameters referenced by the semantic layer.
+# ---------------------------------------------------------------------------
+metrics:
+  seat_demand_buffer: 0.10
+  free_sharing_share: 0.08          # of delivered workstations
+  allocated_share_of_delivered: 0.86
+  cost_per_workstation_month: { mean: 520.0, sigma: 0.35 }

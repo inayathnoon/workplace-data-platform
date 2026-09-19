@@ -12,7 +12,7 @@
 | [`average_unit_workstation_cost`](#average-unit-workstation-cost) | derived | workplace-finance | L4 | The average monthly cost of one desk across a group of workplaces, weighted by how many desks each workplace has. |
 | [`floating_headcount`](#floating-headcount) | atomic | space-planning | L3 | People attached to a workplace with no allocated desk of their own. They rely on the free-sharing pool, so they are the population that pool must cover. |
 | [`headcount_incumbent`](#headcount-incumbent) | atomic | workplace-analytics | L2 | The number of people employed and attached to a workplace on a given day, whether or not they were expected in the office. |
-| [`incumbent_vacancy_rate`](#incumbent-vacancy-rate) | derived | space-planning | L3 | The share of allocated desks with nobody assigned to them. Measures the gap between allocation and population, independent of whether people attended. |
+| [`incumbent_vacancy_rate`](#incumbent-vacancy-rate) | derived | space-planning | L3 | The share of allocated desks with nobody assigned to them. Goes negative when a site has more people attached to it than allocated desks, which is over-subscription rather than an error. |
 | [`peak_day_attendance`](#peak-day-attendance) | derived | space-planning | L2 | The busiest single day in the period, per workplace. Desks have to exist on the busy day, so this is what capacity is sized against. |
 | [`scheduled_office_day_compliance_rate`](#scheduled-office-day-compliance-rate) | derived | workplace-policy | L3 | Of all days the office-day policy required attendance, the share on which the employee attended. Unlike attendance rate, leave and travel are not excused. |
 | [`seat_demand_absolute`](#seat-demand-absolute) | composite | space-planning | L3 | The number of desks a workplace needs, in desks rather than as a share. This is the number that goes into a lease decision. |
@@ -292,7 +292,7 @@ Changelog:
 
 ## incumbent_vacancy_rate
 
-**Incumbent Vacancy Rate** - The share of allocated desks with nobody assigned to them. Measures the gap between allocation and population, independent of whether people attended.
+**Incumbent Vacancy Rate** - The share of allocated desks with nobody assigned to them. Goes negative when a site has more people attached to it than allocated desks, which is over-subscription rather than an error.
 
 - **Type**: derived (weighted_ratio, composes over time by `avg`)
 - **Grain**: workplace_day, entity `workstation`
@@ -345,7 +345,7 @@ order by period, region
 
 Changelog:
 
-- v1 (2025-06-30): Initial definition. Weekends filtered out by default: allocation is a weekday concept and including weekends halves the apparent population.
+- v1 (2025-06-30): Initial definition. Weekends filtered out by default: allocation is a weekday concept and including weekends halves the apparent population. Left unfloored on purpose - the negative value is the signal that a site is over-subscribed, and floating_headcount is the floored counterpart for callers who want a count of unseated people instead.
 
 ## peak_day_attendance
 

@@ -1,15 +1,21 @@
-data/
-warehouse/
-out/
+# Anchored to the repo root on purpose. An unanchored `warehouse/` also
+# matched src/workplace_platform/warehouse/, which silently excluded a whole
+# package from the repo - the build succeeded locally and failed in CI.
+/data/
+/warehouse/
+/out/
+
 .venv/
 __pycache__/
 *.pyc
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
-dbt/target/
-dbt/dbt_packages/
-dbt/logs/
-logs/
+
+/dbt/target/
+/dbt/dbt_packages/
+/dbt/logs/
+/logs/
+
 .DS_Store
 .env

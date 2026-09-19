@@ -136,7 +136,7 @@ with catalogue_tab:
                 compiled = compile_metric(registry, metric.name, dimensions, grain, cfg=cfg)
                 st.code(compiled.sql, language="sql")
                 if WAREHOUSE_PATH.exists():
-                    st.dataframe(_run_metric(compiled.sql), use_container_width=True, height=280)
+                    st.dataframe(_run_metric(compiled.sql), width="stretch", height=280)
                 else:
                     st.info("No warehouse yet. Run `make pipeline`.")
             except MetricCompilationError as exc:
@@ -157,7 +157,7 @@ with lineage_tab:
     st.subheader("Where metrics come from")
     lineage_image = IMG_DIR / "metric_lineage.png"
     if lineage_image.exists():
-        st.image(str(lineage_image), use_container_width=True)
+        st.image(str(lineage_image), width="stretch")
     else:
         st.info("Run `make semantic` to generate the lineage graph.")
 
@@ -173,7 +173,7 @@ with lineage_tab:
                 "consumers": ", ".join(metric.downstream_consumers) or "—",
             }
         )
-    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
 
     st.markdown("**Registry versus warehouse**")
     report = validate(cfg, registry)
@@ -218,7 +218,7 @@ with quality_tab:
 
         if not recall.empty:
             st.markdown("**Did the checks find the planted defects?**")
-            st.dataframe(recall, use_container_width=True, hide_index=True)
+            st.dataframe(recall, width="stretch", hide_index=True)
 
         st.markdown("**All checks**")
         category = st.multiselect(
@@ -228,8 +228,8 @@ with quality_tab:
         )
         view = results[results["category"].isin(category)].copy()
         view["status"] = view["status"].map(lambda s: f"{STATUS_ICON[s]} {s}")
-        st.dataframe(view, use_container_width=True, hide_index=True)
+        st.dataframe(view, width="stretch", hide_index=True)
 
         scorecard_image = IMG_DIR / "dq_scorecard.png"
         if scorecard_image.exists():
-            st.image(str(scorecard_image), use_container_width=True)
+            st.image(str(scorecard_image), width="stretch")

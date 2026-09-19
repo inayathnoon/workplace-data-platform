@@ -1,0 +1,44 @@
+# Known-failing checks, with the reason each one is expected to fail.
+#
+# The simulator deliberately injects defects, so a green scorecard would mean
+# the checks were not working. These checks are therefore expected to fail, and
+# `make dq` exits non-zero only on a failure that is NOT listed here.
+#
+# This is the same mechanism a real platform needs: there is always a known
+# issue that cannot be fixed this quarter, and the choice is between recording
+# it with an owner and a review date, or letting the whole report go red and
+# training everyone to ignore it. The second is what actually happens when this
+# file does not exist.
+#
+# An entry whose check has started passing is reported as stale, because a
+# suppression nobody removes is how a real failure gets hidden later.
+
+expected_failures:
+  - check: active_after_termination
+    reason: >-
+      The HR simulator keeps a share of resigned employees reported as active
+      for up to nine days after their termination date
+      (defects.hr_resigned_still_active_share).
+    owner: workplace-analytics
+    review_by: "2025-09-30"
+
+  - check: snapshot_before_hire_date
+    reason: >-
+      The HR simulator injects exactly defects.hr_rows_before_hire_date rows
+      showing an employee active before their own hire date.
+    owner: workplace-analytics
+    review_by: "2025-09-30"
+
+  - check: tap_after_termination
+    reason: >-
+      The badge simulator injects taps up to 14 days past termination
+      (defects.tap_after_termination_share), beyond the 7-day grace period.
+    owner: security-operations
+    review_by: "2025-08-31"
+
+  - check: missing_workplace_timezone
+    reason: >-
+      The space simulator nulls the timezone on defects.workplace_null_timezone
+      workplaces to exercise the UTC fallback and this check.
+    owner: space-planning
+    review_by: "2025-09-30"

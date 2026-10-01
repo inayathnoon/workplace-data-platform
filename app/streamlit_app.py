@@ -16,9 +16,7 @@ from workplace_platform.semantic.compile import MetricCompilationError, compile_
 from workplace_platform.semantic.registry import load_registry
 from workplace_platform.semantic.validate import validate
 
-st.set_page_config(page_title="Workplace data platform", page_icon="📐", layout="wide")
-
-STATUS_ICON = {"pass": "🟢", "warn": "🟡", "fail": "🔴"}
+st.set_page_config(page_title="Workplace data platform", layout="wide")
 
 
 @st.cache_resource
@@ -121,7 +119,7 @@ with catalogue_tab:
                 st.caption("Built from: " + ", ".join(metric.components))
             if metric.invalid_dimension_combinations:
                 for rule in metric.invalid_dimension_combinations:
-                    st.warning(rule, icon="⚠️")
+                    st.warning(rule)
 
             st.markdown("**Run it**")
             run_cols = st.columns([2, 1])
@@ -142,7 +140,7 @@ with catalogue_tab:
             except MetricCompilationError as exc:
                 # A refusal is a feature: the compiler will not answer a
                 # question the registry says is not answerable.
-                st.error(f"Refused: {exc}", icon="⛔")
+                st.error(f"Refused: {exc}")
 
             with st.expander("Changelog"):
                 for entry in metric.changelog:
@@ -181,13 +179,12 @@ with lineage_tab:
         st.success(
             f"{report.checked_metrics} metrics agree with {report.governed_columns} governed "
             "measure columns.",
-            icon="✅",
         )
     else:
         for error in report.errors:
-            st.error(error, icon="⛔")
+            st.error(error)
     for warning in report.warnings:
-        st.caption(f"⚠️ {warning}")
+        st.caption(f"Warning: {warning}")
 
 
 # --- Data quality ----------------------------------------------------------
@@ -208,12 +205,10 @@ with quality_tab:
             st.success(
                 "Every failing check is a defect the simulator plants on purpose, and each one "
                 "is recorded in conf/dq_expectations.yml with an owner and a review date.",
-                icon="✅",
             )
         else:
             st.error(
                 f"{unexpected} check(s) failed that nobody has written down a reason for.",
-                icon="⛔",
             )
 
         if not recall.empty:
@@ -227,7 +222,7 @@ with quality_tab:
             default=sorted(results["category"].unique()),
         )
         view = results[results["category"].isin(category)].copy()
-        view["status"] = view["status"].map(lambda s: f"{STATUS_ICON[s]} {s}")
+        view["status"] = view["status"].map(str.upper)
         st.dataframe(view, width="stretch", hide_index=True)
 
         scorecard_image = IMG_DIR / "dq_scorecard.png"

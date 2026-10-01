@@ -9,7 +9,7 @@ The CN space system reports the free-sharing desk pool *inside*
 available capacity is their sum.
 
 The column names are identical in both regions. Adding them everywhere
-overstates CN capacity by about 8%, and nothing errors — the query runs, the
+overstates CN capacity by about 8%, and nothing errors - the query runs, the
 types match, the number is simply wrong. This is the failure mode a semantic
 layer is for: not a broken pipeline, a plausible wrong answer.
 
@@ -28,7 +28,7 @@ same knowledge the layer was supposed to hold.
 ## Decision
 
 One metric name. The registry declares the regional variant, and the compiler
-substitutes it — **at row level, inside the aggregate**:
+substitutes it - **at row level, inside the aggregate**:
 
 ```sql
 sum(case when region = 'CN'
@@ -50,5 +50,5 @@ bypasses the semantic layer still gets the right answer.
 The registry's variant block is load-bearing and needs a test, not just a
 comment. Three exist: one that the compiled SQL puts the CASE inside the
 aggregate, one that CN's `available` equals `allocated` in the dimension, and
-one that the generator still produces the quirk at all — if the simulator
+one that the generator still produces the quirk at all - if the simulator
 stopped planting it, the reconciliation would be testing nothing.

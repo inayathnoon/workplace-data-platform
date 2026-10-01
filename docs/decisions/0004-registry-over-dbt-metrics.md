@@ -51,7 +51,7 @@ Two places now describe a number: the dbt model computes it, the registry
 defines it. The validator exists precisely because that duplication is a risk,
 and it is checked in CI and in a pre-commit hook.
 
-Parameters shared between the simulator, dbt and the registry — the seat-demand
-buffer, for one — are compared across all three. A buffer that means 10% in one
+Parameters shared between the simulator, dbt and the registry - the seat-demand
+buffer, for one - are compared across all three. A buffer that means 10% in one
 place and 15% in another produces two defensible numbers and no way to choose
 between them.

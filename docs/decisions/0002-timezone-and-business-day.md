@@ -26,7 +26,7 @@ Three rules, all in `stg_badge_taps` and nowhere else.
 A cutover alone was tried first. It fixed the common case and left a residue:
 attendance ran about two points high in every region, because a shift ending at
 05:30 fell after the cutover and opened a second business day for the same
-person. Raising the cutover only moves the boundary somewhere else — there is
+person. Raising the cutover only moves the boundary somewhere else - there is
 no hour that is both after every night shift ends and before every early start
 begins.
 

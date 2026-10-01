@@ -6,8 +6,8 @@
 
 Five feeds arrive at five different grains: a daily HR snapshot per employee,
 badge taps per swipe, leave per request, travel per trip, space per floor.
-Every question the platform answers — attendance, compliance, occupancy,
-vacancy — is some aggregate over "was this person in this building on this
+Every question the platform answers - attendance, compliance, occupancy,
+vacancy - is some aggregate over "was this person in this building on this
 day". Something has to be the place where those five grains are reconciled,
 and whatever that is becomes the table everything else is built on.
 
@@ -20,8 +20,8 @@ most valuable state in this domain. Every absence question becomes an anti-join
 against a population that has to be derived somewhere else anyway.
 
 **Employee-week.** Smaller, and matches how policy is written ("three days a
-week"). But it cannot answer which days, so peak-day sizing — the number that
-actually drives desk counts — is not derivable from it.
+week"). But it cannot answer which days, so peak-day sizing - the number that
+actually drives desk counts - is not derivable from it.
 
 **Employee-day.** One row per employee per workplace-local day, whether or not
 they attended, carrying the resolved state and the evidence for it.
@@ -37,8 +37,8 @@ is refined further by the rule in ADR 2.
 
 ## Consequences
 
-The table is large — employees times days, about 21.6M rows on the full profile
-— and that is the cost. It buys three things:
+The table is large - employees times days, about 21.6M rows on the full profile
+- and that is the cost. It buys three things:
 
 - Absence is a row, not the absence of a row, so every state is countable the
   same way.

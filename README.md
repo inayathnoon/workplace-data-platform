@@ -1,6 +1,6 @@
 # workplace-data-platform
 
-A dimensional warehouse and governed metric layer for global employee-presence data — five
+A dimensional warehouse and governed metric layer for global employee-presence data - five
 disconnected source systems reconciled into one employee-day fact, with contract tests, lineage,
 and a data quality suite that is graded on what it catches.
 
@@ -15,7 +15,7 @@ and a data quality suite that is graded on what it catches.
 
 A company with around 120,000 employees across 150 offices needs one answer to a simple-sounding
 question: who was expected in which office, on which day, and did they come in. The data exists,
-but it arrives from five systems that disagree about almost everything — the HR system publishes a
+but it arrives from five systems that disagree about almost everything - the HR system publishes a
 full daily snapshot, badge readers publish individual swipes in UTC, leave arrives at request
 grain and is frequently amended after the fact, travel arrives per trip, and the space system
 publishes one row per floor.
@@ -44,7 +44,7 @@ flowchart LR
     SCH[dept_schedule<br/>office-day policy]
   end
 
-  subgraph staging["staging — typed, deduplicated, localised"]
+  subgraph staging["staging - typed, deduplicated, localised"]
     S_HR[stg_hr_employee_snapshot<br/>reported vs derived status]
     S_TAPS[stg_badge_taps<br/>UTC + local + business day]
     S_LV[stg_leave_requests]
@@ -52,7 +52,7 @@ flowchart LR
     S_WP[stg_workplace]
   end
 
-  subgraph intermediate["intermediate — grains reconciled"]
+  subgraph intermediate["intermediate - grains reconciled"]
     SCD[int_employee_scd2<br/>validity intervals]
     LVD[int_leave_days]
     TVD[int_travel_days]
@@ -89,7 +89,7 @@ flowchart LR
 ```
 
 Orchestrated by Dagster: five software-defined assets, one job that materialises the whole graph,
-a daily schedule, and four asset checks — three of them blocking — on the tables everything else
+a daily schedule, and four asset checks - three of them blocking - on the tables everything else
 depends on.
 
 ---
@@ -119,8 +119,8 @@ the rule that fired as `state_rule_id`:
 Two denominators fall out of this, and keeping them apart is the single highest-value distinction
 in the model:
 
-- `is_scheduled_office_day` — the policy required attendance.
-- `is_attendance_expected` — the policy required it **and** they were able to comply: employed,
+- `is_scheduled_office_day` - the policy required attendance.
+- `is_attendance_expected` - the policy required it **and** they were able to comply: employed,
   not on approved leave, not travelling, not posted elsewhere.
 
 $$\text{attendance rate} = \frac{\sum \text{attendance\_expected\_met}}{\sum \text{attendance\_expected\_days}}$$
@@ -130,7 +130,7 @@ gets quietly understated, and it is worth about two points here.
 
 `employment_status_effective` is derived from hire and termination dates, never from the status HR
 reported. The reported value is kept alongside it, so the disagreement between them is measurable
-rather than absorbed — which is exactly what the DQ layer measures.
+rather than absorbed - which is exactly what the DQ layer measures.
 
 ### 2. Timezones and the business day
 
@@ -138,18 +138,18 @@ Taps are stored in UTC; attendance is a local-day concept. Three rules, all in `
 
 - **Both timestamps are carried.** Local date is derived from the local one.
 - **A missing timezone falls back to UTC and sets a flag.** It does not guess a zone from the
-  country — a wrong guess produces a confidently wrong local date, while an explicit fallback
+  country - a wrong guess produces a confidently wrong local date, while an explicit fallback
   produces a number somebody can choose to distrust.
 - **An exit inherits the business day of the entry it follows**; an entry before 04:00 local
   belongs to the previous day.
 
 The third rule is the interesting one. A clock cutover alone was implemented first, and attendance
 still ran about two points high in every region: a shift ending at 05:30 falls *after* a 04:00
-cutover and opens a second business day for the same person. No cutover hour fixes this — there is
+cutover and opens a second business day for the same person. No cutover hour fixes this - there is
 no time that is both after every night shift ends and before every early start begins. Anchoring to
 the preceding entry has no boundary to get wrong, and holds for a shift of any length.
 
-With it in place, the recovered attendance rate equals the simulator's realised rate **exactly** —
+With it in place, the recovered attendance rate equals the simulator's realised rate **exactly** -
 numerator and denominator, in all four regions.
 
 ### 3. Metric composition across grains
@@ -162,7 +162,7 @@ collapsing them into one `GROUP BY` mixes them up:
 | `time_composition` | the days inside a period | headcount `avg`, peak `max`, event counts `sum` |
 | entity composition | workplaces inside a group | additive measures sum; ratios recompute from components |
 
-The compiler therefore emits three levels — the metric's own expression per workplace-day, composed
+The compiler therefore emits three levels - the metric's own expression per workplace-day, composed
 across days, then composed across workplaces:
 
 ```sql
@@ -189,7 +189,7 @@ the buffer is applied once and cannot be applied twice by accident.
 
 The CN space system reports the free-sharing desk pool *inside* `allocated_workstations`. Everywhere
 else the columns are disjoint. The column names are identical, so adding them everywhere overstates
-CN capacity by ~8% with no error at all — the query runs, the types match, the number is wrong.
+CN capacity by ~8% with no error at all - the query runs, the types match, the number is wrong.
 
 The registry declares the variant and the compiler substitutes it **at row level, inside the
 aggregate**:
@@ -207,19 +207,19 @@ holds until someone changes a filter.
 
 ### 5. Data quality, graded rather than displayed
 
-Seven check families — freshness against per-source SLAs, referential integrity, grain uniqueness,
+Seven check families - freshness against per-source SLAs, referential integrity, grain uniqueness,
 status-transition legality, attendance drift by PSI, mart-versus-staging reconciliation, and
 weekday-aware volume anomalies. Every result carries a status, the number behind it, and a sentence
 somebody can act on: `check_47 FAILED` gets ignored, *"5 people badged in more than 7 days after
-their last working day — their access was never revoked"* does not.
+their last working day - their access was never revoked"* does not.
 
 Two things stop it being a wall of green ticks:
 
 - **Defect recall.** The generator writes exactly what it injected to
   `data/raw/_defect_manifest.json`, and the suite is scored against it. A passing scorecard on its
   own proves only that the checks ran.
-- **`conf/dq_expectations.yml`.** The checks that are *expected* to fail — because the simulator
-  plants those defects on purpose — are recorded with an owner, a reason and a review date. The
+- **`conf/dq_expectations.yml`.** The checks that are *expected* to fail - because the simulator
+  plants those defects on purpose - are recorded with an owner, a reason and a review date. The
   run exits non-zero only on an unexpected failure, and reports a suppression whose check has
   started passing as **stale**, because an entry nobody removes is how a real failure gets hidden
   later.
@@ -230,7 +230,7 @@ Two things stop it being a wall of green ticks:
 
 All figures are properties of the simulator, from `conf/sim.yaml` with seed `20240917` on the
 14-day demo profile. "Planted" is the rate the simulator **realised**, not the rate requested in
-the config — eligibility, leave and travel move one from the other, and comparing against the
+the config - eligibility, leave and travel move one from the other, and comparing against the
 request would report simulator behaviour as pipeline error.
 
 ### Planted vs recovered
@@ -242,7 +242,7 @@ request would report simulator behaviour as pipeline error.
 | CN   | 0.7900 | 0.7946 | 0.7946 | 0.00003 |
 | EMEA | 0.5800 | 0.5720 | 0.5720 | 0.00003 |
 
-Recovered through the compiled metric — not a bespoke query written to match. The residual error is
+Recovered through the compiled metric - not a bespoke query written to match. The residual error is
 rounding in the stored ground truth, which is written to four decimal places.
 
 ![Planted vs recovered attendance rate by region](docs/img/planted_vs_recovered.png)
@@ -257,7 +257,7 @@ rounding in the stored ground truth, which is written to four decimal places.
 | Badge: people badging after termination | 27 | 27 | yes |
 
 4 of 4 defect classes detected, detected counts equal to injected counts. 23 checks: 16 pass,
-3 warn, 4 fail — **0 unexpected**, every failure being a planted defect with a written reason.
+3 warn, 4 fail - **0 unexpected**, every failure being a planted defect with a written reason.
 
 ![Data quality scorecard](docs/img/dq_scorecard.png)
 
@@ -266,7 +266,7 @@ rounding in the stored ground truth, which is written to four decimal places.
 ![Every employee-day resolved to exactly one state](docs/img/employee_day_states.png)
 
 Every employee-day lands in exactly one band. The weekday/weekend swing is the non-scheduled band
-expanding, not attendance collapsing — which is the point of resolving absence into reasons rather
+expanding, not attendance collapsing - which is the point of resolving absence into reasons rather
 than leaving it as a gap.
 
 ![Supply against demand by region](docs/img/supply_vs_demand.png)
@@ -278,7 +278,7 @@ inside that column. That reconciliation lives in the registry, applied per row.
 
 ### Scale
 
-`make demo` runs the whole pipeline — generate, load, build, compile, check, chart — in about
+`make demo` runs the whole pipeline - generate, load, build, compile, check, chart - in about
 **12 seconds** on the demo profile. The `full` profile in the same config generates ~35M badge taps
 over 180 days for 120,000 employees; generation is vectorised per day and written as daily Parquet
 partitions, so memory stays flat at any profile size and the same code path serves both.
@@ -301,7 +301,7 @@ make test      # 55 tests, including one end-to-end smoke test
 ## Design decisions and trade-offs
 
 - **The central fact is employee-day, not tap-grain.** Tap grain is smaller and lossless, but it
-  cannot represent an absence — a no-show has no row — so every absence question becomes an
+  cannot represent an absence - a no-show has no row - so every absence question becomes an
   anti-join against a population derived somewhere else. Employee-day costs ~21.6M rows at full
   scale and buys absence as a countable state. *(ADR 1)*
 
@@ -312,7 +312,7 @@ make test      # 55 tests, including one end-to-end smoke test
 
 - **A YAML registry alongside dbt metrics, not instead of them.** dbt metrics live next to the
   models and cannot reference a missing column, which is usually enough. What it does not give is
-  the reverse check — a measure in a governed fact table that *no* metric claims. That direction is
+  the reverse check - a measure in a governed fact table that *no* metric claims. That direction is
   what stops a catalogue rotting, because it fails at the moment the measure is added, which is the
   only moment when writing the definition is cheap. *(ADR 4)*
 
@@ -336,7 +336,7 @@ make test      # 55 tests, including one end-to-end smoke test
 
 - **dbt is invoked as a subprocess rather than through `dagster-dbt`.** Per-model assets in the
   Dagster UI would be nicer, at the cost of pinning the two tools together. For a repo whose
-  subject is the modelling rather than the orchestration, the subprocess is the honest trade — it
+  subject is the modelling rather than the orchestration, the subprocess is the honest trade - it
   is the same command a developer runs by hand.
 
 ---
@@ -347,7 +347,7 @@ make test      # 55 tests, including one end-to-end smoke test
   180 days and DuckDB handles it comfortably, but there is no concurrency story, no separation of
   storage and compute, and no way to let a hundred analysts query it at once. The models are
   deliberately plain SQL so the same graph runs on Snowflake or BigQuery, but the incremental
-  strategy would need rewriting — every model here is a full rebuild.
+  strategy would need rewriting - every model here is a full rebuild.
 
 - **The central fact should be incremental and partitioned.** Rebuilding every employee-day nightly
   is fine at this scale and wasteful at ten times it. The real version is partitioned by local date
@@ -356,7 +356,7 @@ make test      # 55 tests, including one end-to-end smoke test
 
 - **The DQ suite samples nothing.** Every check is a full scan. At production volume the
   distribution and volume checks would run on sampled or pre-aggregated inputs, and the
-  reconciliation checks — which are the expensive ones and the most valuable — would run on a
+  reconciliation checks - which are the expensive ones and the most valuable - would run on a
   schedule rather than on every materialisation.
 
 - **PSI is a weak drift detector and I would not rely on it alone.** It needs enough observations
@@ -366,14 +366,14 @@ make test      # 55 tests, including one end-to-end smoke test
 
 - **The access protocol is declared, not enforced.** Metrics carry a sensitivity tier, and nothing
   in this repo checks who is asking. A production version enforces row-level filters and column
-  masking in the compiler — the tier is already there to enforce against.
+  masking in the compiler - the tier is already there to enforce against.
 
 - **The office-day policy is a static reference extract.** In reality it changes mid-quarter, per
   team, with exceptions, and schedule compliance is only meaningful against the policy that was in
   force on the day. That needs the same SCD2 treatment the HR snapshot already gets.
 
 - **Simulated data cannot validate the thing that actually breaks.** Every defect here is one I
-  chose to plant. Real feeds fail in ways nobody anticipated — a vendor changes a timezone
+  chose to plant. Real feeds fail in ways nobody anticipated - a vendor changes a timezone
   convention without telling anyone, a badge reader is replaced and re-uses device IDs. The value
   of this repo is the framework for catching known failure classes; the unknown ones are found by
   reconciliation against an independent source, which is why the mart-versus-staging check is the
